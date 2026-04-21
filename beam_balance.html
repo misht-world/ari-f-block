@@ -118,13 +118,13 @@
 <div class="card">
   <div class="controls">
     <div class="ctrl">
-      <label>Масса m</label>
+      <label>Масса тела</label>
       <input id="sM" type="range" min="1" max="50" value="10" step="1">
       <div class="val" id="vM">10 кг</div>
     </div>
     <div class="ctrl">
       <label>Упор (от левого конца)</label>
-      <input id="sA" type="range" min="0.10" max="0.49" value="0.25" step="0.01">
+      <input id="sA" type="range" min="0.02" max="0.50" value="0.25" step="0.01">
       <div class="val" id="vA">¼ L</div>
     </div>
     <div class="ctrl">
@@ -209,12 +209,10 @@ function drawTorqueArc(cx, cy, r, startA, endA, cw, color, label, valStr) {
 
   // label at mid-arc, offset outward
   const midA = (startA + endA) / 2;
-  const lx = cx + (r + 17) * Math.cos(midA);
-  const ly = cy + (r + 17) * Math.sin(midA);
+  const lx = cx + (r + 20) * Math.cos(midA);
+  const ly = cy + (r + 20) * Math.sin(midA);
   ctx.font = 'bold 11px Segoe UI'; ctx.fillStyle = color; ctx.textAlign = 'center';
-  ctx.fillText(label, lx, ly - 1);
-  ctx.font = '10px Segoe UI';
-  ctx.fillText(valStr, lx, ly + 11);
+  ctx.fillText(label, lx, ly + 4);
   ctx.restore();
 }
 
@@ -251,7 +249,7 @@ function draw(){
 
   const PAD = 56;
   const pivX = PAD + af * (W - 2*PAD);
-  const pivY = H * 0.52;
+  const pivY = H * 0.60;
   const BL   = W - 2*PAD;
   const BH   = 14;
   const TH   = 24;
@@ -290,27 +288,27 @@ function draw(){
   ctx.strokeStyle='#60a5fa'; ctx.lineWidth=1.5; ctx.stroke();
   ctx.restore();
 
-  // ── Dimension lines (only when nearly horizontal) ──
-  if (Math.abs(tilt) < 0.10) {
-    const dimY = Math.min(lY, pivY) - BH/2 - 22;
-    dimLine(lX, pivX, dimY, '#7c3aed', 'a');
-    dimLine(pivX, cgX, dimY - 20, '#db2477', 'b');
-  }
-
-  // ── Torque arcs around pivot ──
+  // ── Torque arcs around pivot (drawn first, below dim lines) ──
   const tCCW_arc = F * af;
   const tCW_arc  = m * G * (0.5 - af);
   const maxT = Math.max(tCCW_arc, tCW_arc, 1);
-  const rMin = 26, rMax = 52;
+  const rMin = 22, rMax = 42;
   const rCW  = rMin + (rMax - rMin) * (tCW_arc  / maxT);
   const rCCW = rMin + (rMax - rMin) * (tCCW_arc / maxT);
 
-  // CW arc (mg, orange) — upper-right quadrant, clockwise from ~11 o'clock to ~2 o'clock
+  // CW arc (mg, orange) — upper-right, clockwise
   drawTorqueArc(pivX, pivY, rCW,  -1.35, -0.12, true,  '#d97706',
-    '↻ M_mg', `${tCW_arc.toFixed(1)}`);
-  // CCW arc (F, blue) — upper-left quadrant, counterclockwise from ~1 o'clock to ~10 o'clock
+    `↻ mg·b = ${tCW_arc.toFixed(1)}`, null);
+  // CCW arc (F, blue) — upper-left, counterclockwise
   drawTorqueArc(pivX, pivY, rCCW, -1.77, -Math.PI+0.12, false, '#2563eb',
-    '↺ M_F', `${tCCW_arc.toFixed(1)}`);
+    `↺ F·a = ${tCCW_arc.toFixed(1)}`, null);
+
+  // ── Dimension lines — placed well above arcs ──
+  if (Math.abs(tilt) < 0.10) {
+    const arcTop = pivY - rMax - 4;
+    dimLine(lX, pivX, arcTop - 28, '#7c3aed', 'a');
+    dimLine(pivX, cgX, arcTop - 28 - 20, '#db2477', 'b');
+  }
 
   // ── Arrows ──
   const sc = Math.min(100 / Math.max(F + 1, m*G), 1.0);
@@ -504,7 +502,7 @@ document.getElementById('sF').oninput = () => {
 
 function resize(){
   const W = Math.min(680, window.innerWidth - 32);
-  cv.width = W; cv.height = Math.round(W * 0.50);
+  cv.width = W; cv.height = Math.round(W * 0.58);
   draw();
 }
 window.addEventListener('resize', resize);

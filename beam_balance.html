@@ -93,6 +93,16 @@
   .ha  { color: #7c3aed; font-weight: 700; }
   .hb  { color: #db2777; font-weight: 700; }
 
+  .explain-block {
+    background: #f8fafc; border-radius: 8px;
+    padding: 10px 14px 10px 12px;
+    font-size: 0.88rem; line-height: 1.65; color: #334155;
+  }
+  .explain-q {
+    font-weight: 700; color: #1e293b;
+    margin-bottom: 5px; font-size: 0.9rem;
+  }
+
   .legend { display: flex; flex-wrap: wrap; gap: 8px 18px; font-size: 0.8rem; color: #555; }
   .li { display: flex; align-items: center; gap: 5px; }
   .ld { width: 11px; height: 11px; border-radius: 50%; flex-shrink: 0; }
@@ -442,37 +452,71 @@ function draw(){
       </div>
     </div>
 
-    <div style="margin-top:14px;">
-      <div class="sol-title">Почему только одно значение F даёт равновесие</div>
+    <div style="margin-top:14px; display:flex; flex-direction:column; gap:10px;">
 
-      <div class="sol-step">
-        Упор — точка вращения. Вокруг неё два момента:<br>
-        &nbsp;• <span class="hMG">mg</span> давит <b>вниз</b> правее упора → момент <b>по часовой ↻</b>, плечо <span class="hb">b</span><br>
-        &nbsp;• <span class="hF">F</span> давит <b>вниз</b> левее упора → момент <b>против часовой ↺</b>, плечо <span class="ha">a</span>
+      <div class="sol-title">Объяснение по шагам</div>
+
+      <div class="explain-block" style="border-left:3px solid #ef4444;">
+        <div class="explain-q">Почему упор — это точка вращения?</div>
+        Балка опирается на упор в одной точке. Если нет равновесия, она начнёт
+        вращаться именно вокруг этой точки — как качели вокруг оси.
+        Поэтому все моменты считаем относительно упора.
       </div>
 
-      <div class="sol-step" style="margin-top:8px;">
-        Равновесие ⟺ моменты равны: &nbsp;
-        <span class="hF">F</span>·<span class="ha">a</span> = <span class="hMG">mg</span>·<span class="hb">b</span>
-        &nbsp;⟹&nbsp;
-        <span class="hF">F</span> = <span class="hMG">mg</span>·<span class="hb">b</span> / <span class="ha">a</span>
+      <div class="explain-block" style="border-left:3px solid #d97706;">
+        <div class="explain-q">Почему берём полный вес <span class="hMG">mg</span>, а не половину?</div>
+        Балка однородная, поэтому её центр тяжести (ЦТ) ровно посередине.
+        Весь вес <span class="hMG">mg</span> как будто «висит» в одной точке — в ЦТ.
+        Нам не нужно делить балку на части: одна сила <span class="hMG">mg</span>,
+        приложенная в ЦТ, заменяет притяжение каждого кусочка.
       </div>
 
-      <div class="sol-step" style="margin-top:8px; padding:8px 12px; border-radius:8px;
-           background:${balanced ? '#f0fdf4' : '#fef9c3'};">
-        Сейчас: &nbsp;
-        <span class="hF">F·a</span> = <b>${(F*af).toFixed(2)}</b> &nbsp;↺ &nbsp;vs&nbsp; ↻ &nbsp;
+      <div class="explain-block" style="border-left:3px solid #db2477;">
+        <div class="explain-q">Почему плечо тяжести — это <span class="hb">b</span> (расстояние от упора до ЦТ)?</div>
+        Момент силы — это «насколько сильно она поворачивает». Он зависит не только
+        от самой силы, но и от того, на каком расстоянии от точки вращения она
+        приложена. Чем дальше от упора — тем сильнее эффект.
+        <span class="hMG">mg</span> приложена в ЦТ, значит её плечо = расстояние от упора до ЦТ = <span class="hb">b = ${fracB}·L</span>.
+      </div>
+
+      <div class="explain-block" style="border-left:3px solid #7c3aed;">
+        <div class="explain-q">Почему плечо силы <span class="hF">F</span> — это <span class="ha">a</span>?</div>
+        <span class="hF">F</span> прикладывается к короткому концу балки.
+        Расстояние от упора до этого конца равно <span class="ha">a = ${fracA}·L</span>.
+        Именно это расстояние и есть плечо силы <span class="hF">F</span>.
+      </div>
+
+      <div class="explain-block" style="border-left:3px solid #2563eb;">
+        <div class="explain-q">Откуда берётся формула <span class="hF">F</span> = <span class="hMG">mg</span>·<span class="hb">b</span> / <span class="ha">a</span>?</div>
+        Для равновесия оба момента должны быть одинаковыми — иначе балка
+        повернётся в ту сторону, где момент больше.<br><br>
+        Момент от <span class="hMG">mg</span>: &nbsp;<span class="hMG">mg</span> · <span class="hb">b</span> = ${mg_val} · ${fracB}·L<br>
+        Момент от <span class="hF">F</span>: &nbsp;&nbsp;&nbsp;<span class="hF">F</span> · <span class="ha">a</span> = <span class="hF">F</span> · ${fracA}·L<br><br>
+        Приравниваем их:<br>
+        <span class="hF">F</span> · <span class="ha">a</span> = <span class="hMG">mg</span> · <span class="hb">b</span><br>
+        Делим обе части на <span class="ha">a</span>:<br>
+        <span class="hF">F</span> = <span class="hMG">mg</span> · <span class="hb">b</span> / <span class="ha">a</span>
+        = ${mg_val} · ${fracB} / ${fracA}
+        = <b>${Freq.toFixed(2)} Н</b>
+        ${isQuarter ? '<br><span style="color:#888;font-size:0.85em;">Частный случай: при упоре на ¼L получается F = mg</span>' : ''}
+      </div>
+
+      <div style="padding:8px 12px; border-radius:8px; font-size:0.9rem;
+           background:${balanced ? '#f0fdf4' : '#fef9c3'}; border: 1px solid ${balanced ? '#86efac' : '#fde68a'};">
+        Сейчас:&nbsp;
+        <span class="hF">F·a</span> = <b>${(F*af).toFixed(2)}</b>
+        &nbsp;↺ vs ↻&nbsp;
         <span class="hMG">mg·b</span> = <b>${(m*G*(0.5-af)).toFixed(2)}</b>
+        &nbsp;&nbsp;
         ${balanced
-          ? '<span style="color:#166534;font-weight:700;margin-left:8px;">✓ Равны — равновесие!</span>'
-          : `<span style="color:#92400e;font-weight:700;margin-left:8px;">Разность ${Math.abs(F*af - m*G*(0.5-af)).toFixed(2)} Н·(доли L) — балка вращается</span>`}
+          ? '<span style="color:#166534;font-weight:700;">✓ Равны — равновесие!</span>'
+          : `<span style="color:#92400e;font-weight:700;">разность ${Math.abs(F*af - m*G*(0.5-af)).toFixed(2)} — балка вращается</span>`}
       </div>
 
       <div class="answer">
-        F = <span class="hMG">mg</span>·<span class="hb">b</span> / <span class="ha">a</span>
+        <span class="hF">F</span> = <span class="hMG">mg</span>·<span class="hb">b</span> / <span class="ha">a</span>
         = ${mg_val} × ${fracB} / ${fracA}
         = <b>${Freq.toFixed(2)} Н</b>
-        ${isQuarter ? '&nbsp;= mg = ' + mg_val + ' Н &nbsp;(частный случай: a = ¼L)' : ''}
       </div>
     </div>
   `;

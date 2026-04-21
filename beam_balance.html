@@ -1,0 +1,516 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Балка на упоре</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: 'Segoe UI', sans-serif;
+    background: #f0f4f8;
+    color: #222;
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 20px 16px;
+    gap: 16px;
+  }
+  h1 { font-size: 1rem; font-weight: 600; color: #444; text-align: center; max-width: 640px; line-height: 1.5; }
+
+  .card {
+    background: #fff;
+    border-radius: 14px;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.09);
+    width: 100%;
+    max-width: 680px;
+    padding: 18px 22px;
+  }
+
+  canvas { display: block; width: 100%; border-radius: 8px; }
+
+  .controls { display: flex; flex-wrap: wrap; gap: 14px; }
+  .ctrl { flex: 1; min-width: 170px; display: flex; flex-direction: column; gap: 5px; }
+  .ctrl label { font-size: 0.78rem; font-weight: 600; color: #666; text-transform: uppercase; letter-spacing: .04em; }
+  .ctrl input[type=range] { width: 100%; }
+  .ctrl .val { font-size: 0.95rem; font-weight: 700; color: #111; text-align: center; }
+  #sF { accent-color: #2563eb; }
+  #sM { accent-color: #d97706; }
+  #sA { accent-color: #7c3aed; }
+
+  .btn-eq {
+    display: block; width: 100%; margin-top: 12px;
+    padding: 9px 0; font-size: 0.92rem; font-weight: 700;
+    background: #2563eb; color: #fff; border: none;
+    border-radius: 8px; cursor: pointer; transition: background .15s;
+  }
+  .btn-eq:hover { background: #1d4ed8; }
+
+  .torque-row {
+    display: flex; align-items: center; gap: 10px; font-size: 0.9rem;
+    padding: 10px 0 4px;
+  }
+  .torque-bar-wrap {
+    flex: 1; height: 20px; background: #f0f0f0; border-radius: 10px; overflow: hidden; display: flex;
+  }
+  .torque-bar-cw  { background: #fbbf24; height: 100%; transition: width .15s; }
+  .torque-bar-ccw { background: #60a5fa; height: 100%; transition: width .15s; }
+  .torque-label { font-size: 0.75rem; color: #888; min-width: 38px; text-align: center; }
+  .balance-badge {
+    font-size: 0.82rem; font-weight: 700; padding: 4px 10px;
+    border-radius: 20px; text-align: center; white-space: nowrap;
+  }
+  .badge-ok  { background: #dcfce7; color: #166534; }
+  .badge-cw  { background: #fef9c3; color: #92400e; }
+  .badge-ccw { background: #dbeafe; color: #1e3a8a; }
+
+  /* ── formulas block ── */
+  .formulas {
+    background: #f8fafc; border-radius: 10px;
+    border: 1px solid #e2e8f0;
+    padding: 14px 18px;
+    display: flex; flex-direction: column; gap: 6px;
+    font-size: 0.92rem;
+  }
+  .formulas .ftitle { font-size: 0.75rem; font-weight: 700; color: #aaa; text-transform: uppercase; letter-spacing: .05em; margin-bottom: 4px; }
+  .frow { display: flex; align-items: baseline; gap: 8px; line-height: 1.8; }
+  .frow .sym { min-width: 22px; font-size: 0.8rem; color: #aaa; }
+  .frow .expr { flex: 1; }
+  .frow .numval { color: #475569; font-weight: 600; }
+
+  .sol-title { font-size: 0.75rem; font-weight: 700; color: #aaa; text-transform: uppercase; letter-spacing: .05em; margin-bottom: 8px; }
+  .sol-step { font-size: 0.92rem; line-height: 1.85; }
+  .answer {
+    margin-top: 8px; padding: 10px 14px;
+    background: #eff6ff; border-left: 4px solid #2563eb;
+    border-radius: 6px; font-size: 1rem; font-weight: 700; color: #1e40af;
+  }
+
+  .hF  { color: #2563eb; font-weight: 700; }
+  .hMG { color: #d97706; font-weight: 700; }
+  .hN  { color: #16a34a; font-weight: 700; }
+  .ha  { color: #7c3aed; font-weight: 700; }
+  .hb  { color: #db2777; font-weight: 700; }
+
+  .legend { display: flex; flex-wrap: wrap; gap: 8px 18px; font-size: 0.8rem; color: #555; }
+  .li { display: flex; align-items: center; gap: 5px; }
+  .ld { width: 11px; height: 11px; border-radius: 50%; flex-shrink: 0; }
+</style>
+</head>
+<body>
+
+<h1>Балка массой <em>m</em> на упоре — почему только одна сила F удерживает равновесие?</h1>
+
+<div class="card" style="padding:14px 14px 10px;">
+  <canvas id="c"></canvas>
+  <div class="torque-row">
+    <span class="torque-label" style="color:#fbbf24;">↻ mg·b</span>
+    <div class="torque-bar-wrap">
+      <div class="torque-bar-cw"  id="bCW"  style="width:50%"></div>
+      <div class="torque-bar-ccw" id="bCCW" style="width:50%"></div>
+    </div>
+    <span class="torque-label" style="color:#60a5fa;">F·a ↺</span>
+    <div class="balance-badge badge-ok" id="badge">Равновесие</div>
+  </div>
+</div>
+
+<div class="card">
+  <div class="controls">
+    <div class="ctrl">
+      <label>Масса m</label>
+      <input id="sM" type="range" min="1" max="50" value="10" step="1">
+      <div class="val" id="vM">10 кг</div>
+    </div>
+    <div class="ctrl">
+      <label>Упор (от левого конца)</label>
+      <input id="sA" type="range" min="0.10" max="0.49" value="0.25" step="0.01">
+      <div class="val" id="vA">¼ L</div>
+    </div>
+    <div class="ctrl">
+      <label>Приложенная сила F</label>
+      <input id="sF" type="range" min="0" max="500" value="98" step="1">
+      <div class="val" id="vF">98 Н</div>
+    </div>
+  </div>
+  <button class="btn-eq" onclick="setEquilibrium()">⚖ Установить равновесие</button>
+  <div style="margin-top:8px;font-size:0.78rem;color:#999;text-align:center;">
+    Двигай ползунок F — наблюдай как балка наклоняется
+  </div>
+</div>
+
+<div class="card" id="sol"></div>
+
+<div class="card">
+  <div class="legend">
+    <div class="li"><div class="ld" style="background:#2563eb"></div><b style="color:#2563eb">F</b> — приложенная сила вниз (короткий конец)</div>
+    <div class="li"><div class="ld" style="background:#d97706"></div><b style="color:#d97706">mg</b> — сила тяжести вниз (центр тяжести)</div>
+    <div class="li"><div class="ld" style="background:#16a34a"></div><b style="color:#16a34a">N</b> — реакция опоры вверх</div>
+    <div class="li"><div class="ld" style="background:#7c3aed"></div><b style="color:#7c3aed">a</b> — плечо F (упор → короткий конец)</div>
+    <div class="li"><div class="ld" style="background:#db2477"></div><b style="color:#db2477">b</b> — плечо mg (упор → ЦТ)</div>
+  </div>
+</div>
+
+<script>
+const cv = document.getElementById('c');
+const ctx = cv.getContext('2d');
+const G = 9.81;
+
+function arrow(x1,y1,x2,y2,col,lw=2.5){
+  const a=Math.atan2(y2-y1,x2-x1), hl=12;
+  ctx.save(); ctx.strokeStyle=col; ctx.fillStyle=col; ctx.lineWidth=lw;
+  ctx.beginPath(); ctx.moveTo(x1,y1); ctx.lineTo(x2,y2); ctx.stroke();
+  ctx.beginPath();
+  ctx.moveTo(x2,y2);
+  ctx.lineTo(x2-hl*Math.cos(a-.38),y2-hl*Math.sin(a-.38));
+  ctx.lineTo(x2-hl*Math.cos(a+.38),y2-hl*Math.sin(a+.38));
+  ctx.closePath(); ctx.fill(); ctx.restore();
+}
+
+function dimLine(x1,x2,y,col,label){
+  if (x2 <= x1+4) return;
+  ctx.save(); ctx.strokeStyle=col; ctx.fillStyle=col;
+  ctx.lineWidth=1.5; ctx.setLineDash([4,3]);
+  ctx.beginPath(); ctx.moveTo(x1,y-4); ctx.lineTo(x1,y+4); ctx.stroke();
+  ctx.beginPath(); ctx.moveTo(x2,y-4); ctx.lineTo(x2,y+4); ctx.stroke();
+  ctx.setLineDash([]);
+  ctx.beginPath(); ctx.moveTo(x1+2,y); ctx.lineTo(x2-2,y); ctx.stroke();
+  [[x1,1],[x2,-1]].forEach(([x,d])=>{
+    ctx.beginPath();
+    ctx.moveTo(x+d*8,y);
+    ctx.lineTo(x+d*8-d*6,y-3.5);
+    ctx.lineTo(x+d*8-d*6,y+3.5);
+    ctx.closePath(); ctx.fill();
+  });
+  ctx.font='bold 12px Segoe UI'; ctx.textAlign='center';
+  ctx.fillText(label,(x1+x2)/2,y-9);
+  ctx.restore();
+}
+
+function drawTorqueArc(cx, cy, r, startA, endA, cw, color, label, valStr) {
+  if (r < 10) return;
+  ctx.save();
+  ctx.strokeStyle = color; ctx.lineWidth = 2.5;
+  ctx.beginPath();
+  ctx.arc(cx, cy, r, startA, endA, !cw); // canvas: anticlockwise=!cw
+  ctx.stroke();
+
+  // arrowhead at endA
+  const ex = cx + r * Math.cos(endA);
+  const ey = cy + r * Math.sin(endA);
+  const ta = cw ? endA + Math.PI/2 : endA - Math.PI/2;
+  const hl = 9;
+  ctx.fillStyle = color;
+  ctx.beginPath();
+  ctx.moveTo(ex, ey);
+  ctx.lineTo(ex - hl*Math.cos(ta-0.42), ey - hl*Math.sin(ta-0.42));
+  ctx.lineTo(ex - hl*Math.cos(ta+0.42), ey - hl*Math.sin(ta+0.42));
+  ctx.closePath(); ctx.fill();
+
+  // label at mid-arc, offset outward
+  const midA = (startA + endA) / 2;
+  const lx = cx + (r + 17) * Math.cos(midA);
+  const ly = cy + (r + 17) * Math.sin(midA);
+  ctx.font = 'bold 11px Segoe UI'; ctx.fillStyle = color; ctx.textAlign = 'center';
+  ctx.fillText(label, lx, ly - 1);
+  ctx.font = '10px Segoe UI';
+  ctx.fillText(valStr, lx, ly + 11);
+  ctx.restore();
+}
+
+function toFrac(v){
+  const fs=[[1,4,'¼'],[1,3,'⅓'],[1,2,'½'],[2,3,'⅔'],[3,4,'¾'],[1,5,'⅕'],[2,5,'⅖'],[3,5,'⅗'],[4,5,'⅘']];
+  for(const[n,d,s] of fs) if(Math.abs(v-n/d)<.009) return s;
+  return v.toFixed(2);
+}
+
+function setEquilibrium(){
+  const m  = parseFloat(document.getElementById('sM').value);
+  const af = parseFloat(document.getElementById('sA').value);
+  const Freq = m * G * (0.5 - af) / af;
+  const slider = document.getElementById('sF');
+  slider.value = Math.round(Freq);
+  document.getElementById('vF').textContent = Math.round(Freq) + ' Н';
+  draw();
+}
+
+function draw(){
+  const W=cv.width, H=cv.height;
+  const m  = parseFloat(document.getElementById('sM').value);
+  const af = parseFloat(document.getElementById('sA').value);
+  const F  = parseFloat(document.getElementById('sF').value);
+
+  const Freq = m * G * (0.5 - af) / af;
+  // net torque: F↓ at left creates CCW (+), mg↓ at CG creates CW (-)
+  // CCW = F*a - mg*b ; positive = tips left (CCW)
+  const net = F * af - m * G * (0.5 - af);
+  const maxAngle = Math.PI / 6;
+  const tilt = Math.max(-maxAngle, Math.min(maxAngle, net / (Freq * af + 0.001) * 0.55));
+
+  ctx.clearRect(0, 0, W, H);
+
+  const PAD = 56;
+  const pivX = PAD + af * (W - 2*PAD);
+  const pivY = H * 0.52;
+  const BL   = W - 2*PAD;
+  const BH   = 14;
+  const TH   = 24;
+
+  const cosT = Math.cos(tilt), sinT = Math.sin(tilt);
+  const leftDist  = af * BL;
+  const rightDist = (1 - af) * BL;
+  const cgDist    = (0.5 - af) * BL;
+
+  // rotated positions
+  const lX = pivX - leftDist*cosT,  lY = pivY - leftDist*sinT;
+  const rX = pivX + rightDist*cosT, rY = pivY + rightDist*sinT;
+  const cgX = pivX + cgDist*cosT,   cgY = pivY + cgDist*sinT;
+
+  // ── Pivot triangle ──
+  ctx.fillStyle = '#ef4444';
+  ctx.beginPath();
+  ctx.moveTo(pivX, pivY);
+  ctx.lineTo(pivX - TH*0.6, pivY + TH);
+  ctx.lineTo(pivX + TH*0.6, pivY + TH);
+  ctx.closePath(); ctx.fill();
+  ctx.strokeStyle = '#fca5a5'; ctx.lineWidth = 1.5; ctx.stroke();
+
+  // ground
+  ctx.save(); ctx.strokeStyle='#ccc'; ctx.lineWidth=2; ctx.setLineDash([5,4]);
+  ctx.beginPath(); ctx.moveTo(pivX-44,pivY+TH+1); ctx.lineTo(pivX+44,pivY+TH+1); ctx.stroke();
+  ctx.setLineDash([]); ctx.restore();
+
+  // ── Beam ──
+  ctx.save();
+  ctx.translate(pivX, pivY); ctx.rotate(tilt);
+  const grd = ctx.createLinearGradient(0,-BH/2,0,BH/2);
+  grd.addColorStop(0,'#bfdbfe'); grd.addColorStop(1,'#93c5fd');
+  ctx.fillStyle = grd;
+  ctx.beginPath(); ctx.roundRect(-leftDist,-BH/2,BL,BH,4); ctx.fill();
+  ctx.strokeStyle='#60a5fa'; ctx.lineWidth=1.5; ctx.stroke();
+  ctx.restore();
+
+  // ── Dimension lines (only when nearly horizontal) ──
+  if (Math.abs(tilt) < 0.10) {
+    const dimY = Math.min(lY, pivY) - BH/2 - 22;
+    dimLine(lX, pivX, dimY, '#7c3aed', 'a');
+    dimLine(pivX, cgX, dimY - 20, '#db2477', 'b');
+  }
+
+  // ── Torque arcs around pivot ──
+  const tCCW_arc = F * af;
+  const tCW_arc  = m * G * (0.5 - af);
+  const maxT = Math.max(tCCW_arc, tCW_arc, 1);
+  const rMin = 26, rMax = 52;
+  const rCW  = rMin + (rMax - rMin) * (tCW_arc  / maxT);
+  const rCCW = rMin + (rMax - rMin) * (tCCW_arc / maxT);
+
+  // CW arc (mg, orange) — upper-right quadrant, clockwise from ~11 o'clock to ~2 o'clock
+  drawTorqueArc(pivX, pivY, rCW,  -1.35, -0.12, true,  '#d97706',
+    '↻ M_mg', `${tCW_arc.toFixed(1)}`);
+  // CCW arc (F, blue) — upper-left quadrant, counterclockwise from ~1 o'clock to ~10 o'clock
+  drawTorqueArc(pivX, pivY, rCCW, -1.77, -Math.PI+0.12, false, '#2563eb',
+    '↺ M_F', `${tCCW_arc.toFixed(1)}`);
+
+  // ── Arrows ──
+  const sc = Math.min(100 / Math.max(F + 1, m*G), 1.0);
+  const FLen  = Math.max(28, F   * sc);
+  const MGLen = Math.max(28, m*G * sc);
+  const NLen  = Math.max(28, (m*G + F) * sc);
+
+  // F — DOWNWARD from top of left end (short end, pressed down)
+  arrow(lX, lY - BH/2, lX, lY - BH/2 + FLen, '#2563eb', 3);
+
+  // mg — DOWNWARD from CG (bottom of beam)
+  arrow(cgX, cgY - BH/2, cgX, cgY - BH/2 + MGLen, '#d97706', 3);
+
+  // N — UPWARD from pivot base
+  arrow(pivX, pivY+TH+2, pivX, pivY+TH+2 - NLen, '#16a34a', 2.5);
+
+  // ── Arrow labels ──
+  ctx.font = 'bold 13px Segoe UI'; ctx.textAlign = 'center';
+  ctx.fillStyle = '#2563eb';
+  ctx.fillText('F', lX - 16, lY - BH/2 + FLen/2 + 5);
+  ctx.fillStyle = '#d97706';
+  ctx.fillText('mg', cgX + 28, cgY - BH/2 + MGLen/2 + 5);
+  ctx.fillStyle = '#16a34a';
+  ctx.fillText('N', pivX + 22, pivY+TH+2 - NLen/2);
+
+  // ── CG dot ──
+  ctx.fillStyle = '#d97706';
+  ctx.beginPath(); ctx.arc(cgX, cgY, 5, 0, Math.PI*2); ctx.fill();
+
+  // ── Text labels ──
+  ctx.font = '11px Segoe UI'; ctx.fillStyle = '#999'; ctx.textAlign = 'center';
+  ctx.fillText('упор', pivX, pivY+TH+24);
+  ctx.fillText('ЦТ', cgX + (cgDist > 0 ? 20 : -20), cgY + BH + 10);
+
+  // ── Torque bar update ──
+  const tCW  = m * G * (0.5 - af);
+  const tCCW = F * af;
+  const tot  = tCW + tCCW + 0.001;
+  document.getElementById('bCW').style.width  = (tCW  / tot * 100) + '%';
+  document.getElementById('bCCW').style.width = (tCCW / tot * 100) + '%';
+
+  const eps = Freq * 0.015;
+  const badge = document.getElementById('badge');
+  if (Math.abs(F - Freq) < eps) {
+    badge.textContent = '✓ Равновесие'; badge.className = 'balance-badge badge-ok';
+  } else if (F < Freq) {
+    badge.textContent = '↻ Правый конец падает'; badge.className = 'balance-badge badge-cw';
+  } else {
+    badge.textContent = '↺ Левый конец падает'; badge.className = 'balance-badge badge-ccw';
+  }
+
+  // ── Solution panel ──
+  const fracA = toFrac(af);
+  const fracB = toFrac(0.5 - af);
+  const a_val = (af).toFixed(3);
+  const b_val = (0.5 - af).toFixed(3);
+  const mg_val = (m * G).toFixed(2);
+  const N_val  = (m * G + F).toFixed(2);
+  const balanced = Math.abs(F - Freq) < eps;
+
+  const isQuarter = Math.abs(af - 0.25) < 0.005;
+
+  document.getElementById('sol').innerHTML = `
+    <div class="formulas" style="margin-bottom:10px;">
+      <div class="ftitle">Используемые формулы</div>
+
+      <div class="frow">
+        <span class="sym"><span class="hMG">mg</span></span>
+        <span class="expr">сила тяжести</span>
+        <span class="numval hMG">mg</span>
+      </div>
+      <div class="frow">
+        <span class="sym">M</span>
+        <span class="expr">момент силы = сила × плечо</span>
+        <span class="numval">F · a</span>
+      </div>
+      <div class="frow">
+        <span class="sym">ΣM=0</span>
+        <span class="expr">условие равновесия (сумма моментов = 0)</span>
+        <span class="numval"><span class="hF">F</span>·<span class="ha">a</span> = <span class="hMG">mg</span>·<span class="hb">b</span></span>
+      </div>
+      <div class="frow">
+        <span class="sym"><span class="hF">F</span></span>
+        <span class="expr">искомая сила из условия равновесия</span>
+        <span class="numval"><span class="hF">F</span> = <span class="hMG">mg</span>·<span class="hb">b</span> / <span class="ha">a</span></span>
+      </div>
+      <div class="frow">
+        <span class="sym"><span class="hN">N</span></span>
+        <span class="expr">реакция опоры (равновесие сил ↑↓)</span>
+        <span class="numval"><span class="hN">N</span> = <span class="hMG">mg</span> + <span class="hF">F</span></span>
+      </div>
+    </div>
+
+    <div class="formulas">
+      <div class="ftitle">Используемые величины</div>
+
+      <div class="frow">
+        <span class="sym">m</span>
+        <span class="expr">масса балки</span>
+        <span class="numval">${m} кг</span>
+      </div>
+      <div class="frow">
+        <span class="sym">g</span>
+        <span class="expr">ускорение свободного падения</span>
+        <span class="numval">9.81 м/с²</span>
+      </div>
+      <div class="frow">
+        <span class="sym"><span class="hMG">mg</span></span>
+        <span class="expr">сила тяжести = m × g</span>
+        <span class="numval hMG">${m} × 9.81 = ${mg_val} Н</span>
+      </div>
+      <div class="frow">
+        <span class="sym"><span class="ha">a</span></span>
+        <span class="expr">плечо F (упор → короткий конец) = ${fracA}·L</span>
+        <span class="numval ha">${fracA}·L</span>
+      </div>
+      <div class="frow">
+        <span class="sym"><span class="hb">b</span></span>
+        <span class="expr">плечо mg (упор → ЦТ) = L/2 − a = ${fracB}·L</span>
+        <span class="numval hb">${fracB}·L</span>
+      </div>
+      <div class="frow">
+        <span class="sym"><span class="hF">F</span></span>
+        <span class="expr">приложенная сила (ползунок)</span>
+        <span class="numval hF">${F.toFixed(1)} Н</span>
+      </div>
+      <div class="frow">
+        <span class="sym"><span class="hN">N</span></span>
+        <span class="expr">реакция опоры = mg + F</span>
+        <span class="numval hN">${mg_val} + ${F.toFixed(1)} = ${N_val} Н</span>
+      </div>
+    </div>
+
+    <div style="margin-top:14px;">
+      <div class="sol-title">Почему только одно значение F даёт равновесие</div>
+
+      <div class="sol-step">
+        Упор — точка вращения. Вокруг неё два момента:<br>
+        &nbsp;• <span class="hMG">mg</span> давит <b>вниз</b> правее упора → момент <b>по часовой ↻</b>, плечо <span class="hb">b</span><br>
+        &nbsp;• <span class="hF">F</span> давит <b>вниз</b> левее упора → момент <b>против часовой ↺</b>, плечо <span class="ha">a</span>
+      </div>
+
+      <div class="sol-step" style="margin-top:8px;">
+        Равновесие ⟺ моменты равны: &nbsp;
+        <span class="hF">F</span>·<span class="ha">a</span> = <span class="hMG">mg</span>·<span class="hb">b</span>
+        &nbsp;⟹&nbsp;
+        <span class="hF">F</span> = <span class="hMG">mg</span>·<span class="hb">b</span> / <span class="ha">a</span>
+      </div>
+
+      <div class="sol-step" style="margin-top:8px; padding:8px 12px; border-radius:8px;
+           background:${balanced ? '#f0fdf4' : '#fef9c3'};">
+        Сейчас: &nbsp;
+        <span class="hF">F·a</span> = <b>${(F*af).toFixed(2)}</b> &nbsp;↺ &nbsp;vs&nbsp; ↻ &nbsp;
+        <span class="hMG">mg·b</span> = <b>${(m*G*(0.5-af)).toFixed(2)}</b>
+        ${balanced
+          ? '<span style="color:#166534;font-weight:700;margin-left:8px;">✓ Равны — равновесие!</span>'
+          : `<span style="color:#92400e;font-weight:700;margin-left:8px;">Разность ${Math.abs(F*af - m*G*(0.5-af)).toFixed(2)} Н·(доли L) — балка вращается</span>`}
+      </div>
+
+      <div class="answer">
+        F = <span class="hMG">mg</span>·<span class="hb">b</span> / <span class="ha">a</span>
+        = ${mg_val} × ${fracB} / ${fracA}
+        = <b>${Freq.toFixed(2)} Н</b>
+        ${isQuarter ? '&nbsp;= mg = ' + mg_val + ' Н &nbsp;(частный случай: a = ¼L)' : ''}
+      </div>
+    </div>
+  `;
+}
+
+function syncFmax(){
+  const m  = parseFloat(document.getElementById('sM').value);
+  const af = parseFloat(document.getElementById('sA').value);
+  const Freq = m * G * (0.5 - af) / af;
+  const sl = document.getElementById('sF');
+  sl.max = Math.ceil(Freq * 2.5 / 10) * 10;
+}
+
+document.getElementById('sM').oninput = () => {
+  document.getElementById('vM').textContent = document.getElementById('sM').value + ' кг';
+  syncFmax(); draw();
+};
+document.getElementById('sA').oninput = () => {
+  const v = parseFloat(document.getElementById('sA').value);
+  document.getElementById('vA').textContent = toFrac(v) + ' L (' + v.toFixed(2) + ')';
+  syncFmax(); draw();
+};
+document.getElementById('sF').oninput = () => {
+  document.getElementById('vF').textContent = document.getElementById('sF').value + ' Н';
+  draw();
+};
+
+function resize(){
+  const W = Math.min(680, window.innerWidth - 32);
+  cv.width = W; cv.height = Math.round(W * 0.50);
+  draw();
+}
+window.addEventListener('resize', resize);
+resize();
+syncFmax();
+setEquilibrium();
+</script>
+</body>
+</html>

@@ -402,6 +402,12 @@ function showFullSolution(){
 function resetQuiz(){
   quizAttempts = 0; quizSolved = false; quizRevealed = false; quizSavedInput = '';
 }
+function showFValue(){
+  return !isQuizMode() || quizSolved || quizRevealed;
+}
+function fDisplay(val, unit){
+  return showFValue() ? `${val} ${unit}` : `<span style="color:#94a3b8;letter-spacing:.1em;">• • •</span>`;
+}
 
 function checkAnswer(){
   const m   = parseFloat(document.getElementById('sM').value);
@@ -578,7 +584,7 @@ function updateStaticText(){
   const F  = parseFloat(document.getElementById('sF').value);
   document.getElementById('vM').textContent = s.valM(m);
   document.getElementById('vA').textContent = s.valA(toFrac(af), af.toFixed(2));
-  document.getElementById('vF').textContent = s.valF(Math.round(F));
+  document.getElementById('vF').innerHTML = showFValue() ? s.valF(Math.round(F)) : `<span style="color:#94a3b8;letter-spacing:.1em;">• • •</span>`;
 }
 
 function toggleLang(){
@@ -595,7 +601,7 @@ function setEquilibrium(){
   const Freq = m * G * (0.5 - af) / af;
   const sl = document.getElementById('sF');
   sl.value = Math.round(Freq);
-  document.getElementById('vF').textContent = S().valF(Math.round(Freq));
+  document.getElementById('vF').innerHTML = showFValue() ? S().valF(Math.round(Freq)) : `<span style="color:#94a3b8;letter-spacing:.1em;">• • •</span>`;
   draw();
 }
 
@@ -646,7 +652,7 @@ function draw(){
   const rCW =rMin+(rMax-rMin)*(tCW_arc/maxT);
   const rCCW=rMin+(rMax-rMin)*(tCCW_arc/maxT);
   drawTorqueArc(pivX,pivY,rCW, -1.35,-0.12,true, '#d97706',`↻ mg·b = ${tCW_arc.toFixed(1)}`);
-  drawTorqueArc(pivX,pivY,rCCW,-1.77,-Math.PI+0.12,false,'#2563eb',`↺ F·a = ${tCCW_arc.toFixed(1)}`);
+  drawTorqueArc(pivX,pivY,rCCW,-1.77,-Math.PI+0.12,false,'#2563eb', showFValue() ? `↺ F·a = ${tCCW_arc.toFixed(1)}` : '↺ F·a = ?');
 
   // dim lines
   if(Math.abs(tilt)<0.10){
@@ -709,7 +715,7 @@ function draw(){
       <div class="frow"><span class="sym"><span class="hMG">mg</span></span><span class="expr">${s.vMG}</span><span class="numval hMG">${m} × 9.81 = ${mg_val} ${u}</span></div>
       <div class="frow"><span class="sym"><span class="ha">a</span></span><span class="expr">${s.vA(fracA)}</span><span class="numval ha">${fracA}·L</span></div>
       <div class="frow"><span class="sym"><span class="hb">b</span></span><span class="expr">${s.vB(fracB)}</span><span class="numval hb">${fracB}·L</span></div>
-      <div class="frow"><span class="sym"><span class="hF">F</span></span><span class="expr">${s.vFslider}</span><span class="numval hF">${F.toFixed(1)} ${u}</span></div>
+      <div class="frow"><span class="sym"><span class="hF">F</span></span><span class="expr">${s.vFslider}</span><span class="numval hF">${showFValue() ? `${F.toFixed(1)} ${u}` : '<span style="color:#94a3b8;letter-spacing:.1em;">• • •</span>'}</span></div>
       <div class="frow"><span class="sym"><span class="hN">N</span></span><span class="expr">${s.vN}</span><span class="numval hN">${mg_val} + ${F.toFixed(1)} = ${N_val} ${u}</span></div>
     </div>
 
@@ -773,7 +779,7 @@ function draw(){
       <div style="padding:8px 12px;border-radius:8px;font-size:0.9rem;
            background:${balanced?'#f0fdf4':'#fef9c3'};border:1px solid ${balanced?'#86efac':'#fde68a'};">
         ${s.nowLabel}:&nbsp;
-        <span class="hF">F·a</span> = <b>${(F*af).toFixed(2)}</b>
+        <span class="hF">F·a</span> = ${showFValue() ? `<b>${(F*af).toFixed(2)}</b>` : '<span style="color:#94a3b8;letter-spacing:.1em;">• • •</span>'}
         &nbsp;↺ vs ↻&nbsp;
         <span class="hMG">mg·b</span> = <b>${(m*G*(0.5-af)).toFixed(2)}</b>
         &nbsp;&nbsp;
@@ -807,7 +813,7 @@ document.getElementById('sA').oninput=()=>{
   resetQuiz(); syncFmax(); draw();
 };
 document.getElementById('sF').oninput=()=>{
-  document.getElementById('vF').textContent=S().valF(document.getElementById('sF').value);
+  document.getElementById('vF').innerHTML = showFValue() ? S().valF(document.getElementById('sF').value) : `<span style="color:#94a3b8;letter-spacing:.1em;">• • •</span>`;
   draw();
 };
 

@@ -3,31 +3,34 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Балка на упоре</title>
+<title>Балка на упоре / Beam on a support</title>
 <style>
   * { box-sizing: border-box; margin: 0; padding: 0; }
   body {
     font-family: 'Segoe UI', sans-serif;
-    background: #f0f4f8;
-    color: #222;
+    background: #f0f4f8; color: #222;
     min-height: 100vh;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    padding: 20px 16px;
-    gap: 16px;
+    display: flex; flex-direction: column; align-items: center;
+    padding: 20px 16px; gap: 16px;
   }
   h1 { font-size: 1rem; font-weight: 600; color: #444; text-align: center; max-width: 640px; line-height: 1.5; }
 
-  .card {
-    background: #fff;
-    border-radius: 14px;
-    box-shadow: 0 2px 10px rgba(0,0,0,0.09);
-    width: 100%;
-    max-width: 680px;
-    padding: 18px 22px;
+  /* lang toggle */
+  .lang-btn {
+    position: fixed; top: 14px; right: 14px;
+    background: #1e293b; color: #fff; border: none;
+    padding: 6px 14px; border-radius: 20px;
+    font-size: 0.85rem; font-weight: 700; cursor: pointer;
+    letter-spacing: .05em; z-index: 99;
+    transition: background .15s;
   }
+  .lang-btn:hover { background: #334155; }
 
+  .card {
+    background: #fff; border-radius: 14px;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.09);
+    width: 100%; max-width: 680px; padding: 18px 22px;
+  }
   canvas { display: block; width: 100%; border-radius: 8px; }
 
   .controls { display: flex; flex-wrap: wrap; gap: 14px; }
@@ -35,9 +38,7 @@
   .ctrl label { font-size: 0.78rem; font-weight: 600; color: #666; text-transform: uppercase; letter-spacing: .04em; }
   .ctrl input[type=range] { width: 100%; }
   .ctrl .val { font-size: 0.95rem; font-weight: 700; color: #111; text-align: center; }
-  #sF { accent-color: #2563eb; }
-  #sM { accent-color: #d97706; }
-  #sA { accent-color: #7c3aed; }
+  #sF { accent-color: #2563eb; } #sM { accent-color: #d97706; } #sA { accent-color: #7c3aed; }
 
   .btn-eq {
     display: block; width: 100%; margin-top: 12px;
@@ -47,73 +48,37 @@
   }
   .btn-eq:hover { background: #1d4ed8; }
 
-  .torque-row {
-    display: flex; align-items: center; gap: 10px; font-size: 0.9rem;
-    padding: 10px 0 4px;
-  }
-  .torque-bar-wrap {
-    flex: 1; height: 20px; background: #f0f0f0; border-radius: 10px; overflow: hidden; display: flex;
-  }
+  .torque-row { display: flex; align-items: center; gap: 10px; font-size: 0.9rem; padding: 10px 0 4px; }
+  .torque-bar-wrap { flex: 1; height: 20px; background: #f0f0f0; border-radius: 10px; overflow: hidden; display: flex; }
   .torque-bar-cw  { background: #fbbf24; height: 100%; transition: width .15s; }
   .torque-bar-ccw { background: #60a5fa; height: 100%; transition: width .15s; }
   .torque-label { font-size: 0.75rem; color: #888; min-width: 38px; text-align: center; }
-  .balance-badge {
-    font-size: 0.82rem; font-weight: 700; padding: 4px 10px;
-    border-radius: 20px; text-align: center; white-space: nowrap;
-  }
+  .balance-badge { font-size: 0.82rem; font-weight: 700; padding: 4px 10px; border-radius: 20px; text-align: center; white-space: nowrap; }
   .badge-ok  { background: #dcfce7; color: #166534; }
   .badge-cw  { background: #fef9c3; color: #92400e; }
   .badge-ccw { background: #dbeafe; color: #1e3a8a; }
 
-  /* ── formulas block ── */
-  .formulas {
-    background: #f8fafc; border-radius: 10px;
-    border: 1px solid #e2e8f0;
-    padding: 14px 18px;
-    display: flex; flex-direction: column; gap: 6px;
-    font-size: 0.92rem;
-  }
+  .algo-step { display: flex; gap: 10px; align-items: flex-start; margin-top: 8px; font-size: 0.88rem; line-height: 1.6; }
+  .algo-num { flex-shrink: 0; width: 22px; height: 22px; background: #0ea5e9; color: #fff; border-radius: 50%; font-weight: 700; font-size: 0.78rem; display: flex; align-items: center; justify-content: center; margin-top: 1px; }
+
+  .formulas { background: #f8fafc; border-radius: 10px; border: 1px solid #e2e8f0; padding: 14px 18px; display: flex; flex-direction: column; gap: 6px; font-size: 0.92rem; }
   .formulas .ftitle { font-size: 0.75rem; font-weight: 700; color: #aaa; text-transform: uppercase; letter-spacing: .05em; margin-bottom: 4px; }
   .frow { display: flex; align-items: baseline; gap: 8px; line-height: 1.8; }
   .frow .sym { min-width: 22px; font-size: 0.8rem; color: #aaa; }
   .frow .expr { flex: 1; }
   .frow .numval { color: #475569; font-weight: 600; }
 
+  .explain-block { background: #f8fafc; border-radius: 8px; padding: 10px 14px 10px 12px; font-size: 0.88rem; line-height: 1.65; color: #334155; }
+  .explain-q { font-weight: 700; color: #1e293b; margin-bottom: 5px; font-size: 0.9rem; }
+
   .sol-title { font-size: 0.75rem; font-weight: 700; color: #aaa; text-transform: uppercase; letter-spacing: .05em; margin-bottom: 8px; }
-  .sol-step { font-size: 0.92rem; line-height: 1.85; }
-  .answer {
-    margin-top: 8px; padding: 10px 14px;
-    background: #eff6ff; border-left: 4px solid #2563eb;
-    border-radius: 6px; font-size: 1rem; font-weight: 700; color: #1e40af;
-  }
+  .answer { margin-top: 8px; padding: 10px 14px; background: #eff6ff; border-left: 4px solid #2563eb; border-radius: 6px; font-size: 1rem; font-weight: 700; color: #1e40af; }
 
   .hF  { color: #2563eb; font-weight: 700; }
   .hMG { color: #d97706; font-weight: 700; }
   .hN  { color: #16a34a; font-weight: 700; }
   .ha  { color: #7c3aed; font-weight: 700; }
-  .hb  { color: #db2777; font-weight: 700; }
-
-  .algo-step {
-    display: flex; gap: 10px; align-items: flex-start;
-    margin-top: 8px; font-size: 0.88rem; line-height: 1.6;
-  }
-  .algo-num {
-    flex-shrink: 0; width: 22px; height: 22px;
-    background: #0ea5e9; color: #fff;
-    border-radius: 50%; font-weight: 700; font-size: 0.78rem;
-    display: flex; align-items: center; justify-content: center;
-    margin-top: 1px;
-  }
-
-  .explain-block {
-    background: #f8fafc; border-radius: 8px;
-    padding: 10px 14px 10px 12px;
-    font-size: 0.88rem; line-height: 1.65; color: #334155;
-  }
-  .explain-q {
-    font-weight: 700; color: #1e293b;
-    margin-bottom: 5px; font-size: 0.9rem;
-  }
+  .hb  { color: #db2477; font-weight: 700; }
 
   .legend { display: flex; flex-wrap: wrap; gap: 8px 18px; font-size: 0.8rem; color: #555; }
   .li { display: flex; align-items: center; gap: 5px; }
@@ -122,533 +87,595 @@
 </head>
 <body>
 
-<h1>Балка массой <em>m</em> на упоре — почему только одна сила F удерживает равновесие?</h1>
+<button class="lang-btn" id="langBtn" onclick="toggleLang()">EN</button>
+
+<h1 id="pageH1"></h1>
 
 <div class="card" style="padding:14px 14px 10px;">
   <canvas id="c"></canvas>
   <div class="torque-row">
-    <span class="torque-label" style="color:#fbbf24;">↻ mg·b</span>
+    <span class="torque-label" style="color:#fbbf24;" id="tLabelCW"></span>
     <div class="torque-bar-wrap">
       <div class="torque-bar-cw"  id="bCW"  style="width:50%"></div>
       <div class="torque-bar-ccw" id="bCCW" style="width:50%"></div>
     </div>
-    <span class="torque-label" style="color:#60a5fa;">F·a ↺</span>
-    <div class="balance-badge badge-ok" id="badge">Равновесие</div>
+    <span class="torque-label" style="color:#60a5fa;" id="tLabelCCW"></span>
+    <div class="balance-badge badge-ok" id="badge"></div>
   </div>
 </div>
 
 <div class="card">
   <div class="controls">
     <div class="ctrl">
-      <label>Масса тела</label>
+      <label id="lM"></label>
       <input id="sM" type="range" min="1" max="50" value="10" step="1">
-      <div class="val" id="vM">10 кг</div>
+      <div class="val" id="vM"></div>
     </div>
     <div class="ctrl">
-      <label>Упор (от левого конца)</label>
+      <label id="lA"></label>
       <input id="sA" type="range" min="0.02" max="0.50" value="0.25" step="0.01">
-      <div class="val" id="vA">¼ L</div>
+      <div class="val" id="vA"></div>
     </div>
     <div class="ctrl">
-      <label>Приложенная сила F</label>
+      <label id="lF"></label>
       <input id="sF" type="range" min="0" max="500" value="98" step="1">
-      <div class="val" id="vF">98 Н</div>
+      <div class="val" id="vF"></div>
     </div>
   </div>
-  <button class="btn-eq" onclick="setEquilibrium()">⚖ Установить равновесие</button>
-  <div style="margin-top:8px;font-size:0.78rem;color:#999;text-align:center;">
-    Двигай ползунок F — наблюдай как балка наклоняется
-  </div>
+  <button class="btn-eq" id="btnEq" onclick="setEquilibrium()"></button>
+  <div style="margin-top:8px;font-size:0.78rem;color:#999;text-align:center;" id="hint"></div>
 </div>
 
 <div class="card" id="sol"></div>
 
 <div class="card">
-  <div class="legend">
-    <div class="li"><div class="ld" style="background:#2563eb"></div><b style="color:#2563eb">F</b> — приложенная сила вниз (короткий конец)</div>
-    <div class="li"><div class="ld" style="background:#d97706"></div><b style="color:#d97706">mg</b> — сила тяжести вниз (центр тяжести)</div>
-    <div class="li"><div class="ld" style="background:#16a34a"></div><b style="color:#16a34a">N</b> — реакция опоры вверх</div>
-    <div class="li"><div class="ld" style="background:#7c3aed"></div><b style="color:#7c3aed">a</b> — плечо F (упор → короткий конец)</div>
-    <div class="li"><div class="ld" style="background:#db2477"></div><b style="color:#db2477">b</b> — плечо mg (упор → ЦТ)</div>
-  </div>
+  <div class="legend" id="legend"></div>
 </div>
 
 <script>
+// ── Language strings ──────────────────────────────────────────────────────────
+const STRINGS = {
+  ru: {
+    h1: 'Балка массой <em>m</em> на упоре — почему только одна сила F удерживает равновесие?',
+    lM: 'Масса тела', lA: 'Упор (от левого конца)', lF: 'Приложенная сила F',
+    btnEq: '⚖ Установить равновесие',
+    hint: 'Двигай ползунок F — наблюдай как балка наклоняется',
+    tLabelCW: '↻ mg·b', tLabelCCW: 'F·a ↺',
+    badgeOk: '✓ Равновесие', badgeCW: '↻ Правый конец падает', badgeCCW: '↺ Левый конец падает',
+    unit_kg: 'кг', unit_N: 'Н', unit_ms2: 'м/с²', unit_L: 'L',
+    canvasPivot: 'упор', canvasCG: 'ЦТ',
+    langNext: 'EN',
+    // val displays
+    valM: m => `${m} кг`,
+    valA: (frac, v) => `${frac} L (${v})`,
+    valF: f => `${f} Н`,
+    // solution titles
+    titFormulas: 'Используемые формулы',
+    titValues:   'Используемые величины',
+    titAlgo:     'Как решать задачи на равновесие рычага',
+    titExplain:  'Объяснение по шагам',
+    // formula rows
+    fGrav: 'сила тяжести', fMom: 'момент силы = сила × плечо',
+    fEquil: 'условие равновесия (сумма моментов = 0)',
+    fForce: 'искомая сила из условия равновесия',
+    fReact: 'реакция опоры (равновесие сил ↑↓)',
+    // value rows
+    vMass: 'масса балки', vG: 'ускорение свободного падения',
+    vMG: 'сила тяжести = m × g',
+    vA: frac => `плечо F (упор → короткий конец) = ${frac}·L`,
+    vB: frac => `плечо mg (упор → ЦТ) = L/2 − a = ${frac}·L`,
+    vFslider: 'приложенная сила (ползунок)',
+    vN: 'реакция опоры = mg + F',
+    // algo
+    algoGeneral: 'Общий алгоритм — применимый к любой такой задаче',
+    algoSteps: [
+      `<b>Найди точку вращения.</b> Это упор, ось, шарнир — та точка,
+       вокруг которой тело может повернуться. В нашей задаче это упор.`,
+      `<b>Выпиши все силы</b>, которые действуют на тело.
+       Их три: сила тяжести <span class="hMG">mg</span> вниз,
+       наша сила <span class="hF">F</span> вниз, реакция опоры <span class="hN">N</span> вверх.
+       Реакция опоры приложена прямо в точке вращения — её <em>плечо равно нулю</em>,
+       момент она не создаёт, сразу исключаем.`,
+      `<b>Для каждой оставшейся силы найди плечо</b> — перпендикулярное расстояние
+       от точки вращения до линии действия силы.
+       Если сила вертикальная — плечо это горизонтальное расстояние от упора:
+       <span class="ha">a</span> для <span class="hF">F</span>,
+       <span class="hb">b</span> для <span class="hMG">mg</span>.`,
+      `<b>Запиши момент каждой силы:</b> момент = сила × плечо.
+       Определи направление: по часовой ↻ или против ↺.
+       <span class="hMG">mg</span> тянет правый конец вниз (↻),
+       <span class="hF">F</span> давит левый конец вниз (↺).`,
+      `<b>Запиши условие равновесия:</b> сумма моментов = 0, то есть ↻ = ↺.<br>
+       <span class="hF">F</span> · <span class="ha">a</span> =
+       <span class="hMG">mg</span> · <span class="hb">b</span>`,
+      `<b>Реши уравнение</b> относительно неизвестного.
+       Неизвестна <span class="hF">F</span> — делим обе части на <span class="ha">a</span>:<br>
+       <span class="hF">F</span> =
+       <span class="hMG">mg</span> · <span class="hb">b</span> / <span class="ha">a</span>`,
+      `<b>Подставь числа</b> и получи ответ:`,
+    ],
+    // explain blocks
+    eqTitle: 'Чем отличаются масса <b>m</b>, вес <span class="hMG">mg</span> и сила <span class="hF">F</span>?',
+    eqMass:   m => `<b>m = ${m} кг</b> — это <em>масса</em>: сколько вещества в балке. Измеряется в килограммах. Сама по себе масса не давит и не тянет.`,
+    eqWeight: (m, mg) => `<b><span class="hMG">mg</span> = m · g = ${m} · 9.81 = ${mg} Н</b> — это <em>сила тяжести</em> (вес). Земля притягивает балку с этой силой. Задана природой — мы её не выбираем.`,
+    eqF:      `<b><span class="hF">F</span></b> — это <em>наша</em> сила, которую мы прикладываем к короткому концу. Неизвестна заранее. Именно её мы ищем.`,
+    eqGeneral: 'Общая формула (для любого положения упора):',
+    eqWhyQ:   'Почему при упоре на ¼L получается F = mg — случайность?',
+    eqWhyA:   `Нет. При ¼L оба плеча равны: <span class="ha">a</span> = ¼L и
+               <span class="hb">b</span> = ½L − ¼L = ¼L. В формуле они сокращаются:<br>
+               <span class="hF">F</span> = <span class="hMG">mg</span> · <b>¼L / ¼L</b>
+               = <span class="hMG">mg</span> · 1 = <span class="hMG">mg</span>`,
+    eqNow:    (frac, fa, fb, freq, mg, eq) =>
+      `Сейчас: упор на ${frac}L → <span class="ha">a</span> = ${fa}L,
+       <span class="hb">b</span> = ${fb}L,
+       <span class="hF">F</span> = <b>${freq} Н</b>,
+       <span class="hMG">mg</span> = <b>${mg} Н</b> ${eq ? '→ F = mg ✓' : '→ F ≠ mg'}`,
+    eqHint:   'Подвигай ползунок <b>«Упор»</b> — увидишь как F меняется, а mg нет.',
+
+    pivotQ:   'Почему упор — это точка вращения?',
+    pivotA:   `Балка опирается на упор в одной точке. Если нет равновесия, она начнёт
+               вращаться именно вокруг неё — как качели вокруг оси.
+               Поэтому все моменты считаем относительно упора.`,
+    fullMGQ:  'Почему берём полный вес <span class="hMG">mg</span>, а не половину?',
+    fullMGA:  `Балка однородная — её центр тяжести (ЦТ) ровно посередине.
+               Весь вес <span class="hMG">mg</span> как будто «висит» в одной точке — в ЦТ.
+               Одна сила <span class="hMG">mg</span> в ЦТ заменяет притяжение каждого кусочка балки.`,
+    armBQ:    'Почему плечо тяжести — это <span class="hb">b</span> (от упора до ЦТ)?',
+    armBA:    frac => `Момент силы — «насколько сильно она поворачивает». Чем дальше точка приложения
+               от упора — тем сильнее эффект.
+               <span class="hMG">mg</span> приложена в ЦТ, значит её плечо = расстояние от упора до ЦТ =
+               <span class="hb">b = ${frac}·L</span>.`,
+    armAQ:    'Почему плечо силы <span class="hF">F</span> — это <span class="ha">a</span>?',
+    armAA:    frac => `<span class="hF">F</span> прикладывается к короткому концу балки.
+               Расстояние от упора до этого конца равно <span class="ha">a = ${frac}·L</span>.
+               Именно это расстояние и есть плечо.`,
+    derivQ:   'Откуда берётся формула <span class="hF">F</span> = <span class="hMG">mg</span>·<span class="hb">b</span> / <span class="ha">a</span>?',
+    derivA:   `Для равновесия оба момента должны быть равны — иначе балка повернётся туда, где момент больше.`,
+    derivMom: (mg, fb, fracA) => `Момент от <span class="hMG">mg</span>: <span class="hMG">mg</span> · <span class="hb">b</span> = ${mg} · ${fb}·L<br>
+               Момент от <span class="hF">F</span>: <span class="hF">F</span> · <span class="ha">a</span> = <span class="hF">F</span> · ${fracA}·L`,
+    derivEq:  `Приравниваем и делим на <span class="ha">a</span>:`,
+    quarterNote: 'Частный случай: при упоре на ¼L получается F = mg',
+
+    nowLabel: 'Сейчас',
+    balanced: '✓ Равны — равновесие!',
+    unbalanced: diff => `разность ${diff} — балка вращается`,
+
+    legend: [
+      ['#2563eb', 'F',  '— приложенная сила вниз (короткий конец)'],
+      ['#d97706', 'mg', '— сила тяжести вниз (центр тяжести)'],
+      ['#16a34a', 'N',  '— реакция опоры вверх'],
+      ['#7c3aed', 'a',  '— плечо F (упор → короткий конец)'],
+      ['#db2477', 'b',  '— плечо mg (упор → ЦТ)'],
+    ],
+  },
+
+  en: {
+    h1: 'A uniform beam of mass <em>m</em> on a support — why does only one force F maintain equilibrium?',
+    lM: 'Body mass', lA: 'Support position (from left end)', lF: 'Applied force F',
+    btnEq: '⚖ Set equilibrium',
+    hint: 'Move the F slider — watch the beam tilt',
+    tLabelCW: '↻ mg·b', tLabelCCW: 'F·a ↺',
+    badgeOk: '✓ Equilibrium', badgeCW: '↻ Right end falling', badgeCCW: '↺ Left end falling',
+    unit_kg: 'kg', unit_N: 'N', unit_ms2: 'm/s²', unit_L: 'L',
+    canvasPivot: 'pivot', canvasCG: 'CoM',
+    langNext: 'RU',
+    valM: m => `${m} kg`,
+    valA: (frac, v) => `${frac} L (${v})`,
+    valF: f => `${f} N`,
+    titFormulas: 'Formulas',
+    titValues:   'Values',
+    titAlgo:     'How to solve lever equilibrium problems',
+    titExplain:  'Step-by-step explanation',
+    fGrav: 'gravitational force (weight)', fMom: 'torque = force × moment arm',
+    fEquil: 'equilibrium condition (sum of torques = 0)',
+    fForce: 'unknown force from equilibrium',
+    fReact: 'support reaction (vertical equilibrium)',
+    vMass: 'beam mass', vG: 'gravitational acceleration',
+    vMG: 'weight = m × g',
+    vA: frac => `F arm (pivot → short end) = ${frac}·L`,
+    vB: frac => `mg arm (pivot → CoM) = L/2 − a = ${frac}·L`,
+    vFslider: 'applied force (slider)',
+    vN: 'support reaction = mg + F',
+    algoGeneral: 'General algorithm — applicable to any such problem',
+    algoSteps: [
+      `<b>Find the pivot point.</b> This is the support, axis, or hinge — the point
+       around which the body can rotate. In this problem it is the support.`,
+      `<b>List all forces</b> acting on the body.
+       There are three: gravity <span class="hMG">mg</span> downward,
+       our force <span class="hF">F</span> downward, support reaction <span class="hN">N</span> upward.
+       N acts at the pivot — its <em>arm is zero</em>, it creates no torque, eliminate it immediately.`,
+      `<b>Find the moment arm of each remaining force</b> — the perpendicular distance
+       from the pivot to the line of action. For vertical forces, the arm is the horizontal
+       distance from the pivot to the point of application:
+       <span class="ha">a</span> for <span class="hF">F</span>,
+       <span class="hb">b</span> for <span class="hMG">mg</span>.`,
+      `<b>Write the torque of each force:</b> torque = force × arm.
+       Determine direction: clockwise ↻ or counterclockwise ↺.
+       <span class="hMG">mg</span> pulls the right end down (↻),
+       <span class="hF">F</span> pushes the left end down (↺).`,
+      `<b>Write the equilibrium condition:</b> sum of torques = 0, i.e. ↻ = ↺.<br>
+       <span class="hF">F</span> · <span class="ha">a</span> =
+       <span class="hMG">mg</span> · <span class="hb">b</span>`,
+      `<b>Solve the equation</b> for the unknown.
+       <span class="hF">F</span> is unknown — divide both sides by <span class="ha">a</span>:<br>
+       <span class="hF">F</span> =
+       <span class="hMG">mg</span> · <span class="hb">b</span> / <span class="ha">a</span>`,
+      `<b>Substitute numbers</b> and get the answer:`,
+    ],
+    eqTitle: 'What is the difference between mass <b>m</b>, weight <span class="hMG">mg</span>, and force <span class="hF">F</span>?',
+    eqMass:   m => `<b>m = ${m} kg</b> — this is <em>mass</em>: how much matter is in the beam. Measured in kilograms. By itself, mass doesn't push or pull.`,
+    eqWeight: (m, mg) => `<b><span class="hMG">mg</span> = m · g = ${m} · 9.81 = ${mg} N</b> — this is the <em>gravitational force</em> (weight). Earth pulls the beam with this force. It is given by nature — we don't choose it.`,
+    eqF:      `<b><span class="hF">F</span></b> — the force <em>we</em> apply to the short end. Unknown beforehand. This is exactly what we solve for.`,
+    eqGeneral: 'General formula (for any pivot position):',
+    eqWhyQ:   'Why does F = mg when the pivot is at ¼L — is it a coincidence?',
+    eqWhyA:   `No. At ¼L both arms are equal: <span class="ha">a</span> = ¼L and
+               <span class="hb">b</span> = ½L − ¼L = ¼L. They cancel in the formula:<br>
+               <span class="hF">F</span> = <span class="hMG">mg</span> · <b>¼L / ¼L</b>
+               = <span class="hMG">mg</span> · 1 = <span class="hMG">mg</span>`,
+    eqNow:    (frac, fa, fb, freq, mg, eq) =>
+      `Now: pivot at ${frac}L → <span class="ha">a</span> = ${fa}L,
+       <span class="hb">b</span> = ${fb}L,
+       <span class="hF">F</span> = <b>${freq} N</b>,
+       <span class="hMG">mg</span> = <b>${mg} N</b> ${eq ? '→ F = mg ✓' : '→ F ≠ mg'}`,
+    eqHint:   'Move the <b>"Support"</b> slider — watch F change while mg stays constant.',
+
+    pivotQ:   'Why is the support the rotation point?',
+    pivotA:   `The beam rests on the support at a single point. Without equilibrium it will
+               start rotating around that point — like a seesaw around its axis.
+               That is why all torques are calculated relative to the support.`,
+    fullMGQ:  'Why do we use the full weight <span class="hMG">mg</span>, not half?',
+    fullMGA:  `The beam is uniform — its center of mass (CoM) is exactly in the middle.
+               The entire weight <span class="hMG">mg</span> acts as if it hangs from one point — the CoM.
+               One force <span class="hMG">mg</span> at the CoM replaces gravity on every small piece.`,
+    armBQ:    'Why is the moment arm of gravity <span class="hb">b</span> (pivot to CoM)?',
+    armBA:    frac => `A torque describes "how strongly the force rotates" the body. The further the point
+               of application from the pivot — the stronger the effect.
+               <span class="hMG">mg</span> is applied at the CoM, so its arm = distance from pivot to CoM =
+               <span class="hb">b = ${frac}·L</span>.`,
+    armAQ:    'Why is the moment arm of <span class="hF">F</span> equal to <span class="ha">a</span>?',
+    armAA:    frac => `<span class="hF">F</span> is applied at the short end of the beam.
+               The distance from the pivot to that end is <span class="ha">a = ${frac}·L</span>.
+               That distance is the moment arm.`,
+    derivQ:   'How is the formula <span class="hF">F</span> = <span class="hMG">mg</span>·<span class="hb">b</span> / <span class="ha">a</span> derived?',
+    derivA:   `For equilibrium both torques must be equal — otherwise the beam rotates toward whichever is larger.`,
+    derivMom: (mg, fb, fracA) => `Torque from <span class="hMG">mg</span>: <span class="hMG">mg</span> · <span class="hb">b</span> = ${mg} · ${fb}·L<br>
+               Torque from <span class="hF">F</span>: <span class="hF">F</span> · <span class="ha">a</span> = <span class="hF">F</span> · ${fracA}·L`,
+    derivEq:  `Set them equal and divide by <span class="ha">a</span>:`,
+    quarterNote: 'Special case: when pivot is at ¼L, F = mg',
+
+    nowLabel: 'Now',
+    balanced: '✓ Equal — equilibrium!',
+    unbalanced: diff => `difference ${diff} — beam is rotating`,
+
+    legend: [
+      ['#2563eb', 'F',  '— applied force downward (short end)'],
+      ['#d97706', 'mg', '— gravity downward (center of mass)'],
+      ['#16a34a', 'N',  '— support reaction upward'],
+      ['#7c3aed', 'a',  '— F arm (pivot → short end)'],
+      ['#db2477', 'b',  '— mg arm (pivot → CoM)'],
+    ],
+  }
+};
+
+let curLang = 'ru';
+const S = () => STRINGS[curLang];
+
+// ── Canvas & drawing ──────────────────────────────────────────────────────────
 const cv = document.getElementById('c');
 const ctx = cv.getContext('2d');
 const G = 9.81;
 
 function arrow(x1,y1,x2,y2,col,lw=2.5){
-  const a=Math.atan2(y2-y1,x2-x1), hl=12;
-  ctx.save(); ctx.strokeStyle=col; ctx.fillStyle=col; ctx.lineWidth=lw;
-  ctx.beginPath(); ctx.moveTo(x1,y1); ctx.lineTo(x2,y2); ctx.stroke();
-  ctx.beginPath();
-  ctx.moveTo(x2,y2);
+  const a=Math.atan2(y2-y1,x2-x1),hl=12;
+  ctx.save();ctx.strokeStyle=col;ctx.fillStyle=col;ctx.lineWidth=lw;
+  ctx.beginPath();ctx.moveTo(x1,y1);ctx.lineTo(x2,y2);ctx.stroke();
+  ctx.beginPath();ctx.moveTo(x2,y2);
   ctx.lineTo(x2-hl*Math.cos(a-.38),y2-hl*Math.sin(a-.38));
   ctx.lineTo(x2-hl*Math.cos(a+.38),y2-hl*Math.sin(a+.38));
-  ctx.closePath(); ctx.fill(); ctx.restore();
+  ctx.closePath();ctx.fill();ctx.restore();
 }
 
 function dimLine(x1,x2,y,col,label){
-  if (x2 <= x1+4) return;
-  ctx.save(); ctx.strokeStyle=col; ctx.fillStyle=col;
-  ctx.lineWidth=1.5; ctx.setLineDash([4,3]);
-  ctx.beginPath(); ctx.moveTo(x1,y-4); ctx.lineTo(x1,y+4); ctx.stroke();
-  ctx.beginPath(); ctx.moveTo(x2,y-4); ctx.lineTo(x2,y+4); ctx.stroke();
+  if(x2<=x1+4)return;
+  ctx.save();ctx.strokeStyle=col;ctx.fillStyle=col;ctx.lineWidth=1.5;ctx.setLineDash([4,3]);
+  ctx.beginPath();ctx.moveTo(x1,y-4);ctx.lineTo(x1,y+4);ctx.stroke();
+  ctx.beginPath();ctx.moveTo(x2,y-4);ctx.lineTo(x2,y+4);ctx.stroke();
   ctx.setLineDash([]);
-  ctx.beginPath(); ctx.moveTo(x1+2,y); ctx.lineTo(x2-2,y); ctx.stroke();
+  ctx.beginPath();ctx.moveTo(x1+2,y);ctx.lineTo(x2-2,y);ctx.stroke();
   [[x1,1],[x2,-1]].forEach(([x,d])=>{
-    ctx.beginPath();
-    ctx.moveTo(x+d*8,y);
-    ctx.lineTo(x+d*8-d*6,y-3.5);
-    ctx.lineTo(x+d*8-d*6,y+3.5);
-    ctx.closePath(); ctx.fill();
+    ctx.beginPath();ctx.moveTo(x+d*8,y);
+    ctx.lineTo(x+d*8-d*6,y-3.5);ctx.lineTo(x+d*8-d*6,y+3.5);
+    ctx.closePath();ctx.fill();
   });
-  ctx.font='bold 12px Segoe UI'; ctx.textAlign='center';
-  ctx.fillText(label,(x1+x2)/2,y-9);
-  ctx.restore();
+  ctx.font='bold 12px Segoe UI';ctx.textAlign='center';
+  ctx.fillText(label,(x1+x2)/2,y-9);ctx.restore();
 }
 
-function drawTorqueArc(cx, cy, r, startA, endA, cw, color, label, valStr) {
-  if (r < 10) return;
-  ctx.save();
-  ctx.strokeStyle = color; ctx.lineWidth = 2.5;
-  ctx.beginPath();
-  ctx.arc(cx, cy, r, startA, endA, !cw); // canvas: anticlockwise=!cw
-  ctx.stroke();
-
-  // arrowhead at endA
-  const ex = cx + r * Math.cos(endA);
-  const ey = cy + r * Math.sin(endA);
-  const ta = cw ? endA + Math.PI/2 : endA - Math.PI/2;
-  const hl = 9;
-  ctx.fillStyle = color;
-  ctx.beginPath();
-  ctx.moveTo(ex, ey);
-  ctx.lineTo(ex - hl*Math.cos(ta-0.42), ey - hl*Math.sin(ta-0.42));
-  ctx.lineTo(ex - hl*Math.cos(ta+0.42), ey - hl*Math.sin(ta+0.42));
-  ctx.closePath(); ctx.fill();
-
-  // label at mid-arc, offset outward
-  const midA = (startA + endA) / 2;
-  const lx = cx + (r + 20) * Math.cos(midA);
-  const ly = cy + (r + 20) * Math.sin(midA);
-  ctx.font = 'bold 11px Segoe UI'; ctx.fillStyle = color; ctx.textAlign = 'center';
-  ctx.fillText(label, lx, ly + 4);
-  ctx.restore();
+function drawTorqueArc(cx,cy,r,startA,endA,cw,color,label){
+  if(r<10)return;
+  ctx.save();ctx.strokeStyle=color;ctx.lineWidth=2.5;
+  ctx.beginPath();ctx.arc(cx,cy,r,startA,endA,!cw);ctx.stroke();
+  const ex=cx+r*Math.cos(endA),ey=cy+r*Math.sin(endA);
+  const ta=cw?endA+Math.PI/2:endA-Math.PI/2,hl=9;
+  ctx.fillStyle=color;ctx.beginPath();ctx.moveTo(ex,ey);
+  ctx.lineTo(ex-hl*Math.cos(ta-.42),ey-hl*Math.sin(ta-.42));
+  ctx.lineTo(ex-hl*Math.cos(ta+.42),ey-hl*Math.sin(ta+.42));
+  ctx.closePath();ctx.fill();
+  const midA=(startA+endA)/2;
+  const lx=cx+(r+20)*Math.cos(midA),ly=cy+(r+20)*Math.sin(midA);
+  ctx.font='bold 11px Segoe UI';ctx.fillStyle=color;ctx.textAlign='center';
+  ctx.fillText(label,lx,ly+4);ctx.restore();
 }
 
 function toFrac(v){
   const fs=[[1,4,'¼'],[1,3,'⅓'],[1,2,'½'],[2,3,'⅔'],[3,4,'¾'],[1,5,'⅕'],[2,5,'⅖'],[3,5,'⅗'],[4,5,'⅘']];
-  for(const[n,d,s] of fs) if(Math.abs(v-n/d)<.009) return s;
+  for(const[n,d,s] of fs)if(Math.abs(v-n/d)<.009)return s;
   return v.toFixed(2);
 }
 
+// ── UI update helpers ─────────────────────────────────────────────────────────
+function updateStaticText(){
+  const s = S();
+  document.getElementById('pageH1').innerHTML   = s.h1;
+  document.getElementById('lM').textContent     = s.lM;
+  document.getElementById('lA').textContent     = s.lA;
+  document.getElementById('lF').textContent     = s.lF;
+  document.getElementById('btnEq').textContent  = s.btnEq;
+  document.getElementById('hint').textContent   = s.hint;
+  document.getElementById('tLabelCW').textContent  = s.tLabelCW;
+  document.getElementById('tLabelCCW').textContent = s.tLabelCCW;
+  document.getElementById('langBtn').textContent   = s.langNext;
+
+  // legend
+  document.getElementById('legend').innerHTML = s.legend.map(([col, sym, desc]) =>
+    `<div class="li"><div class="ld" style="background:${col}"></div>
+     <b style="color:${col}">${sym}</b>${desc}</div>`
+  ).join('');
+
+  // val displays
+  const m  = parseFloat(document.getElementById('sM').value);
+  const af = parseFloat(document.getElementById('sA').value);
+  const F  = parseFloat(document.getElementById('sF').value);
+  document.getElementById('vM').textContent = s.valM(m);
+  document.getElementById('vA').textContent = s.valA(toFrac(af), af.toFixed(2));
+  document.getElementById('vF').textContent = s.valF(Math.round(F));
+}
+
+function toggleLang(){
+  curLang = curLang === 'ru' ? 'en' : 'ru';
+  document.documentElement.lang = curLang;
+  updateStaticText();
+  draw();
+}
+
+// ── Main draw ─────────────────────────────────────────────────────────────────
 function setEquilibrium(){
   const m  = parseFloat(document.getElementById('sM').value);
   const af = parseFloat(document.getElementById('sA').value);
   const Freq = m * G * (0.5 - af) / af;
-  const slider = document.getElementById('sF');
-  slider.value = Math.round(Freq);
-  document.getElementById('vF').textContent = Math.round(Freq) + ' Н';
+  const sl = document.getElementById('sF');
+  sl.value = Math.round(Freq);
+  document.getElementById('vF').textContent = S().valF(Math.round(Freq));
   draw();
 }
 
 function draw(){
-  const W=cv.width, H=cv.height;
+  const W=cv.width,H=cv.height;
   const m  = parseFloat(document.getElementById('sM').value);
   const af = parseFloat(document.getElementById('sA').value);
   const F  = parseFloat(document.getElementById('sF').value);
+  const s  = S();
 
-  const Freq = m * G * (0.5 - af) / af;
-  // net torque: F↓ at left creates CCW (+), mg↓ at CG creates CW (-)
-  // CCW = F*a - mg*b ; positive = tips left (CCW)
-  const net = F * af - m * G * (0.5 - af);
-  const maxAngle = Math.PI / 6;
-  const tilt = Math.max(-maxAngle, Math.min(maxAngle, net / (Freq * af + 0.001) * 0.55));
+  const Freq = m*G*(0.5-af)/af;
+  const net  = F*af - m*G*(0.5-af);
+  const maxAngle = Math.PI/6;
+  const tilt = Math.max(-maxAngle, Math.min(maxAngle, net/(Freq*af+0.001)*0.55));
 
-  ctx.clearRect(0, 0, W, H);
+  ctx.clearRect(0,0,W,H);
 
-  const PAD = 56;
-  const pivX = PAD + af * (W - 2*PAD);
-  const pivY = H * 0.60;
-  const BL   = W - 2*PAD;
-  const BH   = 14;
-  const TH   = 24;
+  const PAD=56, BL=W-2*PAD, BH=14, TH=24;
+  const pivX=PAD+af*BL, pivY=H*0.60;
+  const cosT=Math.cos(tilt),sinT=Math.sin(tilt);
+  const leftDist=af*BL, rightDist=(1-af)*BL, cgDist=(0.5-af)*BL;
+  const lX=pivX-leftDist*cosT, lY=pivY-leftDist*sinT;
+  const cgX=pivX+cgDist*cosT,  cgY=pivY+cgDist*sinT;
 
-  const cosT = Math.cos(tilt), sinT = Math.sin(tilt);
-  const leftDist  = af * BL;
-  const rightDist = (1 - af) * BL;
-  const cgDist    = (0.5 - af) * BL;
+  // pivot triangle
+  ctx.fillStyle='#ef4444';
+  ctx.beginPath();ctx.moveTo(pivX,pivY);
+  ctx.lineTo(pivX-TH*0.6,pivY+TH);ctx.lineTo(pivX+TH*0.6,pivY+TH);
+  ctx.closePath();ctx.fill();
+  ctx.strokeStyle='#fca5a5';ctx.lineWidth=1.5;ctx.stroke();
+  ctx.save();ctx.strokeStyle='#ccc';ctx.lineWidth=2;ctx.setLineDash([5,4]);
+  ctx.beginPath();ctx.moveTo(pivX-44,pivY+TH+1);ctx.lineTo(pivX+44,pivY+TH+1);ctx.stroke();
+  ctx.setLineDash([]);ctx.restore();
 
-  // rotated positions
-  const lX = pivX - leftDist*cosT,  lY = pivY - leftDist*sinT;
-  const rX = pivX + rightDist*cosT, rY = pivY + rightDist*sinT;
-  const cgX = pivX + cgDist*cosT,   cgY = pivY + cgDist*sinT;
+  // beam
+  ctx.save();ctx.translate(pivX,pivY);ctx.rotate(tilt);
+  const grd=ctx.createLinearGradient(0,-BH/2,0,BH/2);
+  grd.addColorStop(0,'#bfdbfe');grd.addColorStop(1,'#93c5fd');
+  ctx.fillStyle=grd;
+  ctx.beginPath();ctx.roundRect(-leftDist,-BH/2,BL,BH,4);ctx.fill();
+  ctx.strokeStyle='#60a5fa';ctx.lineWidth=1.5;ctx.stroke();ctx.restore();
 
-  // ── Pivot triangle ──
-  ctx.fillStyle = '#ef4444';
-  ctx.beginPath();
-  ctx.moveTo(pivX, pivY);
-  ctx.lineTo(pivX - TH*0.6, pivY + TH);
-  ctx.lineTo(pivX + TH*0.6, pivY + TH);
-  ctx.closePath(); ctx.fill();
-  ctx.strokeStyle = '#fca5a5'; ctx.lineWidth = 1.5; ctx.stroke();
+  // torque arcs
+  const tCW_arc=m*G*(0.5-af), tCCW_arc=F*af;
+  const maxT=Math.max(tCW_arc,tCCW_arc,1);
+  const rMin=22,rMax=42;
+  const rCW =rMin+(rMax-rMin)*(tCW_arc/maxT);
+  const rCCW=rMin+(rMax-rMin)*(tCCW_arc/maxT);
+  drawTorqueArc(pivX,pivY,rCW, -1.35,-0.12,true, '#d97706',`↻ mg·b = ${tCW_arc.toFixed(1)}`);
+  drawTorqueArc(pivX,pivY,rCCW,-1.77,-Math.PI+0.12,false,'#2563eb',`↺ F·a = ${tCCW_arc.toFixed(1)}`);
 
-  // ground
-  ctx.save(); ctx.strokeStyle='#ccc'; ctx.lineWidth=2; ctx.setLineDash([5,4]);
-  ctx.beginPath(); ctx.moveTo(pivX-44,pivY+TH+1); ctx.lineTo(pivX+44,pivY+TH+1); ctx.stroke();
-  ctx.setLineDash([]); ctx.restore();
-
-  // ── Beam ──
-  ctx.save();
-  ctx.translate(pivX, pivY); ctx.rotate(tilt);
-  const grd = ctx.createLinearGradient(0,-BH/2,0,BH/2);
-  grd.addColorStop(0,'#bfdbfe'); grd.addColorStop(1,'#93c5fd');
-  ctx.fillStyle = grd;
-  ctx.beginPath(); ctx.roundRect(-leftDist,-BH/2,BL,BH,4); ctx.fill();
-  ctx.strokeStyle='#60a5fa'; ctx.lineWidth=1.5; ctx.stroke();
-  ctx.restore();
-
-  // ── Torque arcs around pivot (drawn first, below dim lines) ──
-  const tCCW_arc = F * af;
-  const tCW_arc  = m * G * (0.5 - af);
-  const maxT = Math.max(tCCW_arc, tCW_arc, 1);
-  const rMin = 22, rMax = 42;
-  const rCW  = rMin + (rMax - rMin) * (tCW_arc  / maxT);
-  const rCCW = rMin + (rMax - rMin) * (tCCW_arc / maxT);
-
-  // CW arc (mg, orange) — upper-right, clockwise
-  drawTorqueArc(pivX, pivY, rCW,  -1.35, -0.12, true,  '#d97706',
-    `↻ mg·b = ${tCW_arc.toFixed(1)}`, null);
-  // CCW arc (F, blue) — upper-left, counterclockwise
-  drawTorqueArc(pivX, pivY, rCCW, -1.77, -Math.PI+0.12, false, '#2563eb',
-    `↺ F·a = ${tCCW_arc.toFixed(1)}`, null);
-
-  // ── Dimension lines — placed well above arcs ──
-  if (Math.abs(tilt) < 0.10) {
-    const arcTop = pivY - rMax - 4;
-    dimLine(lX, pivX, arcTop - 28, '#7c3aed', 'a');
-    dimLine(pivX, cgX, arcTop - 28 - 20, '#db2477', 'b');
+  // dim lines
+  if(Math.abs(tilt)<0.10){
+    const arcTop=pivY-rMax-4;
+    dimLine(lX,pivX,arcTop-28,'#7c3aed','a');
+    dimLine(pivX,cgX,arcTop-48,'#db2477','b');
   }
 
-  // ── Arrows ──
-  const sc = Math.min(100 / Math.max(F + 1, m*G), 1.0);
-  const FLen  = Math.max(28, F   * sc);
-  const MGLen = Math.max(28, m*G * sc);
-  const NLen  = Math.max(28, (m*G + F) * sc);
+  // force arrows
+  const sc=Math.min(100/Math.max(F+1,m*G),1.0);
+  const FLen =Math.max(28,F*sc), MGLen=Math.max(28,m*G*sc), NLen=Math.max(28,(m*G+F)*sc);
+  arrow(lX,lY-BH/2,lX,lY-BH/2+FLen,'#2563eb',3);
+  arrow(cgX,cgY-BH/2,cgX,cgY-BH/2+MGLen,'#d97706',3);
+  arrow(pivX,pivY+TH+2,pivX,pivY+TH+2-NLen,'#16a34a',2.5);
 
-  // F — DOWNWARD from top of left end (short end, pressed down)
-  arrow(lX, lY - BH/2, lX, lY - BH/2 + FLen, '#2563eb', 3);
+  ctx.font='bold 13px Segoe UI';ctx.textAlign='center';
+  ctx.fillStyle='#2563eb'; ctx.fillText('F',lX-16,lY-BH/2+FLen/2+5);
+  ctx.fillStyle='#d97706'; ctx.fillText('mg',cgX+28,cgY-BH/2+MGLen/2+5);
+  ctx.fillStyle='#16a34a'; ctx.fillText('N',pivX+22,pivY+TH+2-NLen/2);
 
-  // mg — DOWNWARD from CG (bottom of beam)
-  arrow(cgX, cgY - BH/2, cgX, cgY - BH/2 + MGLen, '#d97706', 3);
+  ctx.fillStyle='#d97706';
+  ctx.beginPath();ctx.arc(cgX,cgY,5,0,Math.PI*2);ctx.fill();
 
-  // N — UPWARD from pivot base
-  arrow(pivX, pivY+TH+2, pivX, pivY+TH+2 - NLen, '#16a34a', 2.5);
+  ctx.font='11px Segoe UI';ctx.fillStyle='#999';ctx.textAlign='center';
+  ctx.fillText(s.canvasPivot, pivX, pivY+TH+24);
+  ctx.fillText(s.canvasCG, cgX+(cgDist>0?20:-20), cgY+BH+10);
 
-  // ── Arrow labels ──
-  ctx.font = 'bold 13px Segoe UI'; ctx.textAlign = 'center';
-  ctx.fillStyle = '#2563eb';
-  ctx.fillText('F', lX - 16, lY - BH/2 + FLen/2 + 5);
-  ctx.fillStyle = '#d97706';
-  ctx.fillText('mg', cgX + 28, cgY - BH/2 + MGLen/2 + 5);
-  ctx.fillStyle = '#16a34a';
-  ctx.fillText('N', pivX + 22, pivY+TH+2 - NLen/2);
+  // torque bar
+  const tCW=m*G*(0.5-af),tCCW=F*af,tot=tCW+tCCW+0.001;
+  document.getElementById('bCW').style.width =(tCW/tot*100)+'%';
+  document.getElementById('bCCW').style.width=(tCCW/tot*100)+'%';
 
-  // ── CG dot ──
-  ctx.fillStyle = '#d97706';
-  ctx.beginPath(); ctx.arc(cgX, cgY, 5, 0, Math.PI*2); ctx.fill();
-
-  // ── Text labels ──
-  ctx.font = '11px Segoe UI'; ctx.fillStyle = '#999'; ctx.textAlign = 'center';
-  ctx.fillText('упор', pivX, pivY+TH+24);
-  ctx.fillText('ЦТ', cgX + (cgDist > 0 ? 20 : -20), cgY + BH + 10);
-
-  // ── Torque bar update ──
-  const tCW  = m * G * (0.5 - af);
-  const tCCW = F * af;
-  const tot  = tCW + tCCW + 0.001;
-  document.getElementById('bCW').style.width  = (tCW  / tot * 100) + '%';
-  document.getElementById('bCCW').style.width = (tCCW / tot * 100) + '%';
-
-  const eps = Freq * 0.015;
-  const badge = document.getElementById('badge');
-  if (Math.abs(F - Freq) < eps) {
-    badge.textContent = '✓ Равновесие'; badge.className = 'balance-badge badge-ok';
-  } else if (F < Freq) {
-    badge.textContent = '↻ Правый конец падает'; badge.className = 'balance-badge badge-cw';
-  } else {
-    badge.textContent = '↺ Левый конец падает'; badge.className = 'balance-badge badge-ccw';
-  }
+  const eps=Freq*0.015;
+  const badge=document.getElementById('badge');
+  if(Math.abs(F-Freq)<eps){badge.textContent=s.badgeOk;badge.className='balance-badge badge-ok';}
+  else if(F<Freq)         {badge.textContent=s.badgeCW;badge.className='balance-badge badge-cw';}
+  else                    {badge.textContent=s.badgeCCW;badge.className='balance-badge badge-ccw';}
 
   // ── Solution panel ──
-  const fracA = toFrac(af);
-  const fracB = toFrac(0.5 - af);
-  const a_val = (af).toFixed(3);
-  const b_val = (0.5 - af).toFixed(3);
-  const mg_val = (m * G).toFixed(2);
-  const N_val  = (m * G + F).toFixed(2);
-  const balanced = Math.abs(F - Freq) < eps;
-
-  const isQuarter = Math.abs(af - 0.25) < 0.005;
+  const fracA=toFrac(af), fracB=toFrac(0.5-af);
+  const mg_val=(m*G).toFixed(2), N_val=(m*G+F).toFixed(2);
+  const balanced=Math.abs(F-Freq)<eps;
+  const isQ=Math.abs(af-0.25)<0.005;
+  const u=s.unit_N, uk=s.unit_kg, um=s.unit_ms2;
 
   document.getElementById('sol').innerHTML = `
     <div class="formulas" style="margin-bottom:10px;">
-      <div class="ftitle">Используемые формулы</div>
-
-      <div class="frow">
-        <span class="sym"><span class="hMG">mg</span></span>
-        <span class="expr">сила тяжести</span>
-        <span class="numval hMG">mg</span>
-      </div>
-      <div class="frow">
-        <span class="sym">M</span>
-        <span class="expr">момент силы = сила × плечо</span>
-        <span class="numval">F · a</span>
-      </div>
-      <div class="frow">
-        <span class="sym">ΣM=0</span>
-        <span class="expr">условие равновесия (сумма моментов = 0)</span>
-        <span class="numval"><span class="hF">F</span>·<span class="ha">a</span> = <span class="hMG">mg</span>·<span class="hb">b</span></span>
-      </div>
-      <div class="frow">
-        <span class="sym"><span class="hF">F</span></span>
-        <span class="expr">искомая сила из условия равновесия</span>
-        <span class="numval"><span class="hF">F</span> = <span class="hMG">mg</span>·<span class="hb">b</span> / <span class="ha">a</span></span>
-      </div>
-      <div class="frow">
-        <span class="sym"><span class="hN">N</span></span>
-        <span class="expr">реакция опоры (равновесие сил ↑↓)</span>
-        <span class="numval"><span class="hN">N</span> = <span class="hMG">mg</span> + <span class="hF">F</span></span>
-      </div>
+      <div class="ftitle">${s.titFormulas}</div>
+      <div class="frow"><span class="sym"><span class="hMG">mg</span></span><span class="expr">${s.fGrav}</span><span class="numval hMG">mg</span></div>
+      <div class="frow"><span class="sym">M</span><span class="expr">${s.fMom}</span><span class="numval">F · a</span></div>
+      <div class="frow"><span class="sym">ΣM=0</span><span class="expr">${s.fEquil}</span><span class="numval"><span class="hF">F</span>·<span class="ha">a</span> = <span class="hMG">mg</span>·<span class="hb">b</span></span></div>
+      <div class="frow"><span class="sym"><span class="hF">F</span></span><span class="expr">${s.fForce}</span><span class="numval"><span class="hF">F</span> = <span class="hMG">mg</span>·<span class="hb">b</span>/<span class="ha">a</span></span></div>
+      <div class="frow"><span class="sym"><span class="hN">N</span></span><span class="expr">${s.fReact}</span><span class="numval"><span class="hN">N</span> = <span class="hMG">mg</span> + <span class="hF">F</span></span></div>
     </div>
 
     <div class="formulas">
-      <div class="ftitle">Используемые величины</div>
-
-      <div class="frow">
-        <span class="sym">m</span>
-        <span class="expr">масса балки</span>
-        <span class="numval">${m} кг</span>
-      </div>
-      <div class="frow">
-        <span class="sym">g</span>
-        <span class="expr">ускорение свободного падения</span>
-        <span class="numval">9.81 м/с²</span>
-      </div>
-      <div class="frow">
-        <span class="sym"><span class="hMG">mg</span></span>
-        <span class="expr">сила тяжести = m × g</span>
-        <span class="numval hMG">${m} × 9.81 = ${mg_val} Н</span>
-      </div>
-      <div class="frow">
-        <span class="sym"><span class="ha">a</span></span>
-        <span class="expr">плечо F (упор → короткий конец) = ${fracA}·L</span>
-        <span class="numval ha">${fracA}·L</span>
-      </div>
-      <div class="frow">
-        <span class="sym"><span class="hb">b</span></span>
-        <span class="expr">плечо mg (упор → ЦТ) = L/2 − a = ${fracB}·L</span>
-        <span class="numval hb">${fracB}·L</span>
-      </div>
-      <div class="frow">
-        <span class="sym"><span class="hF">F</span></span>
-        <span class="expr">приложенная сила (ползунок)</span>
-        <span class="numval hF">${F.toFixed(1)} Н</span>
-      </div>
-      <div class="frow">
-        <span class="sym"><span class="hN">N</span></span>
-        <span class="expr">реакция опоры = mg + F</span>
-        <span class="numval hN">${mg_val} + ${F.toFixed(1)} = ${N_val} Н</span>
-      </div>
+      <div class="ftitle">${s.titValues}</div>
+      <div class="frow"><span class="sym">m</span><span class="expr">${s.vMass}</span><span class="numval">${m} ${uk}</span></div>
+      <div class="frow"><span class="sym">g</span><span class="expr">${s.vG}</span><span class="numval">9.81 ${um}</span></div>
+      <div class="frow"><span class="sym"><span class="hMG">mg</span></span><span class="expr">${s.vMG}</span><span class="numval hMG">${m} × 9.81 = ${mg_val} ${u}</span></div>
+      <div class="frow"><span class="sym"><span class="ha">a</span></span><span class="expr">${s.vA(fracA)}</span><span class="numval ha">${fracA}·L</span></div>
+      <div class="frow"><span class="sym"><span class="hb">b</span></span><span class="expr">${s.vB(fracB)}</span><span class="numval hb">${fracB}·L</span></div>
+      <div class="frow"><span class="sym"><span class="hF">F</span></span><span class="expr">${s.vFslider}</span><span class="numval hF">${F.toFixed(1)} ${u}</span></div>
+      <div class="frow"><span class="sym"><span class="hN">N</span></span><span class="expr">${s.vN}</span><span class="numval hN">${mg_val} + ${F.toFixed(1)} = ${N_val} ${u}</span></div>
     </div>
 
-    <div style="margin-top:14px; display:flex; flex-direction:column; gap:10px;">
+    <div style="margin-top:14px;display:flex;flex-direction:column;gap:10px;">
+      <div class="sol-title">${s.titAlgo}</div>
 
-      <div class="sol-title">Как решать задачи на равновесие рычага</div>
-
-      <div class="explain-block" style="border-left:3px solid #0ea5e9; background:#f0f9ff;">
-        <div class="explain-q" style="color:#0369a1;">Общий алгоритм — применимый к любой такой задаче</div>
-
-        <div class="algo-step"><span class="algo-num">1</span>
-          <span><b>Найди точку вращения.</b> Это упор, ось, шарнир — та точка,
-          вокруг которой тело может повернуться. В нашей задаче это упор.</span>
-        </div>
-
-        <div class="algo-step"><span class="algo-num">2</span>
-          <span><b>Выпиши все силы</b>, которые действуют на тело.
-          Здесь их три: сила тяжести <span class="hMG">mg</span> вниз,
-          наша сила <span class="hF">F</span> вниз, реакция опоры <span class="hN">N</span> вверх.
-          Реакция опоры приложена прямо в точке вращения, поэтому её
-          <em>плечо равно нулю</em> и момент она не создаёт — можно сразу исключить.</span>
-        </div>
-
-        <div class="algo-step"><span class="algo-num">3</span>
-          <span><b>Для каждой оставшейся силы найди плечо</b> — перпендикулярное
-          расстояние от точки вращения до линии действия силы.
-          Если сила вертикальная, плечо — это просто горизонтальное расстояние
-          от упора до точки приложения:
-          <span class="ha">a</span> для <span class="hF">F</span> и
-          <span class="hb">b</span> для <span class="hMG">mg</span>.</span>
-        </div>
-
-        <div class="algo-step"><span class="algo-num">4</span>
-          <span><b>Запиши момент каждой силы:</b> момент = сила × плечо.
-          Определи направление: по часовой ↻ или против ↺.
-          Здесь <span class="hMG">mg</span> тянет правый конец вниз (↻),
-          а <span class="hF">F</span> давит на левый конец вниз (↺).</span>
-        </div>
-
-        <div class="algo-step"><span class="algo-num">5</span>
-          <span><b>Запиши условие равновесия:</b> сумма моментов = 0,
-          то есть момент ↻ = моменту ↺.<br>
-          <span class="hF">F</span> · <span class="ha">a</span> = <span class="hMG">mg</span> · <span class="hb">b</span></span>
-        </div>
-
-        <div class="algo-step"><span class="algo-num">6</span>
-          <span><b>Реши уравнение</b> относительно неизвестного.
-          Неизвестна <span class="hF">F</span> — делим обе части на <span class="ha">a</span>:<br>
-          <span class="hF">F</span> = <span class="hMG">mg</span> · <span class="hb">b</span> / <span class="ha">a</span></span>
-        </div>
-
-        <div class="algo-step"><span class="algo-num">7</span>
-          <span><b>Подставь числа</b> и получи ответ:<br>
-          <span class="hF">F</span> = ${mg_val} · ${fracB} / ${fracA} = <b>${Freq.toFixed(2)} Н</b></span>
-        </div>
+      <div class="explain-block" style="border-left:3px solid #0ea5e9;background:#f0f9ff;">
+        <div class="explain-q" style="color:#0369a1;">${s.algoGeneral}</div>
+        ${s.algoSteps.map((text, i) =>
+          `<div class="algo-step"><span class="algo-num">${i+1}</span><span>${text}${i===6
+            ? ` <span class="hF">F</span> = ${mg_val} · ${fracB} / ${fracA} = <b>${Freq.toFixed(2)} ${u}</b>`
+            : ''}</span></div>`
+        ).join('')}
       </div>
 
+      <div class="sol-title">${s.titExplain}</div>
+
       <div class="explain-block" style="border-left:3px solid #6366f1;">
-        <div class="explain-q">Чем отличаются масса <b>m</b>, вес <span class="hMG">mg</span> и сила <span class="hF">F</span>?</div>
-
-        <b>m = ${m} кг</b> — это <em>масса</em>: сколько вещества в балке.
-        Её измеряют в килограммах. Сама по себе масса не давит и не тянет.<br><br>
-
-        <b><span class="hMG">mg</span> = m · g = ${m} · 9.81 = ${mg_val} Н</b> — это <em>сила тяжести</em> (вес).
-        Земля притягивает балку с этой силой. Она уже задана — мы её не выбираем,
-        она зависит только от массы балки.<br><br>
-
-        <b><span class="hF">F</span></b> — это <em>наша</em> сила, которую мы прикладываем к
-        короткому концу. Она неизвестна заранее. Именно её мы ищем.<br><br>
-
-        <b>Общая формула (для любого положения упора):</b><br>
-        <span class="hF">F</span> = <span class="hMG">mg</span> · <span class="hb">b</span> / <span class="ha">a</span>
-        &nbsp;=&nbsp; ${mg_val} · ${fracB} / ${fracA}
-        &nbsp;=&nbsp; <b>${Freq.toFixed(2)} Н</b><br><br>
-
-        <b>Почему при упоре на ¼L получается F = mg — простое совпадение?</b><br>
-        Нет, не случайность. При упоре на ¼L оба плеча равны:
-        <span class="ha">a</span> = ¼L и <span class="hb">b</span> = ½L − ¼L = ¼L.
-        В формуле они сокращаются:<br>
-        <span class="hF">F</span> = <span class="hMG">mg</span> · <b>¼L / ¼L</b>
-        = <span class="hMG">mg</span> · 1 = <span class="hMG">mg</span><br><br>
-
-        При <em>любом другом</em> положении упора плечи разные — и <span class="hF">F</span> ≠ <span class="hMG">mg</span>:<br>
-        <span style="background:${Math.abs(af-0.25)<0.02?'#dcfce7':'#fef9c3'};padding:3px 8px;border-radius:5px;color:${Math.abs(af-0.25)<0.02?'#166534':'#92400e'};">
-          Сейчас: упор на ${toFrac(af)}L →
-          <span class="ha">a</span> = ${fracA}L,
-          <span class="hb">b</span> = ${fracB}L,
-          <span class="hF">F</span> = <b>${Freq.toFixed(2)} Н</b>,
-          <span class="hMG">mg</span> = <b>${mg_val} Н</b>
-          ${Math.abs(af-0.25)<0.02 ? '→ F = mg ✓' : '→ F ≠ mg'}
+        <div class="explain-q">${s.eqTitle}</div>
+        ${s.eqMass(m)}<br><br>
+        ${s.eqWeight(m, mg_val)}<br><br>
+        ${s.eqF}<br><br>
+        <b>${s.eqGeneral}</b><br>
+        <span class="hF">F</span> = <span class="hMG">mg</span>·<span class="hb">b</span>/<span class="ha">a</span>
+        = ${mg_val} · ${fracB} / ${fracA} = <b>${Freq.toFixed(2)} ${u}</b><br><br>
+        <b>${s.eqWhyQ}</b><br>${s.eqWhyA}<br><br>
+        <span style="background:${isQ?'#dcfce7':'#fef9c3'};padding:3px 8px;border-radius:5px;color:${isQ?'#166534':'#92400e'};">
+          ${s.eqNow(toFrac(af), fracA, fracB, Freq.toFixed(2), mg_val, isQ)}
         </span><br><br>
-        Подвигай ползунок <b>«Упор»</b> — и сразу увидишь как F меняется, а mg нет.
+        ${s.eqHint}
       </div>
 
       <div class="explain-block" style="border-left:3px solid #ef4444;">
-        <div class="explain-q">Почему упор — это точка вращения?</div>
-        Балка опирается на упор в одной точке. Если нет равновесия, она начнёт
-        вращаться именно вокруг этой точки — как качели вокруг оси.
-        Поэтому все моменты считаем относительно упора.
+        <div class="explain-q">${s.pivotQ}</div>${s.pivotA}
       </div>
 
       <div class="explain-block" style="border-left:3px solid #d97706;">
-        <div class="explain-q">Почему берём полный вес <span class="hMG">mg</span>, а не половину?</div>
-        Балка однородная, поэтому её центр тяжести (ЦТ) ровно посередине.
-        Весь вес <span class="hMG">mg</span> как будто «висит» в одной точке — в ЦТ.
-        Нам не нужно делить балку на части: одна сила <span class="hMG">mg</span>,
-        приложенная в ЦТ, заменяет притяжение каждого кусочка.
+        <div class="explain-q">${s.fullMGQ}</div>${s.fullMGA}
       </div>
 
       <div class="explain-block" style="border-left:3px solid #db2477;">
-        <div class="explain-q">Почему плечо тяжести — это <span class="hb">b</span> (расстояние от упора до ЦТ)?</div>
-        Момент силы — это «насколько сильно она поворачивает». Он зависит не только
-        от самой силы, но и от того, на каком расстоянии от точки вращения она
-        приложена. Чем дальше от упора — тем сильнее эффект.
-        <span class="hMG">mg</span> приложена в ЦТ, значит её плечо = расстояние от упора до ЦТ = <span class="hb">b = ${fracB}·L</span>.
+        <div class="explain-q">${s.armBQ}</div>${s.armBA(fracB)}
       </div>
 
       <div class="explain-block" style="border-left:3px solid #7c3aed;">
-        <div class="explain-q">Почему плечо силы <span class="hF">F</span> — это <span class="ha">a</span>?</div>
-        <span class="hF">F</span> прикладывается к короткому концу балки.
-        Расстояние от упора до этого конца равно <span class="ha">a = ${fracA}·L</span>.
-        Именно это расстояние и есть плечо силы <span class="hF">F</span>.
+        <div class="explain-q">${s.armAQ}</div>${s.armAA(fracA)}
       </div>
 
       <div class="explain-block" style="border-left:3px solid #2563eb;">
-        <div class="explain-q">Откуда берётся формула <span class="hF">F</span> = <span class="hMG">mg</span>·<span class="hb">b</span> / <span class="ha">a</span>?</div>
-        Для равновесия оба момента должны быть одинаковыми — иначе балка
-        повернётся в ту сторону, где момент больше.<br><br>
-        Момент от <span class="hMG">mg</span>: &nbsp;<span class="hMG">mg</span> · <span class="hb">b</span> = ${mg_val} · ${fracB}·L<br>
-        Момент от <span class="hF">F</span>: &nbsp;&nbsp;&nbsp;<span class="hF">F</span> · <span class="ha">a</span> = <span class="hF">F</span> · ${fracA}·L<br><br>
-        Приравниваем их:<br>
-        <span class="hF">F</span> · <span class="ha">a</span> = <span class="hMG">mg</span> · <span class="hb">b</span><br>
-        Делим обе части на <span class="ha">a</span>:<br>
-        <span class="hF">F</span> = <span class="hMG">mg</span> · <span class="hb">b</span> / <span class="ha">a</span>
-        = ${mg_val} · ${fracB} / ${fracA}
-        = <b>${Freq.toFixed(2)} Н</b>
-        ${isQuarter ? '<br><span style="color:#888;font-size:0.85em;">Частный случай: при упоре на ¼L получается F = mg</span>' : ''}
+        <div class="explain-q">${s.derivQ}</div>
+        ${s.derivA}<br><br>
+        ${s.derivMom(mg_val, fracB, fracA)}<br><br>
+        ${s.derivEq}<br>
+        <span class="hF">F</span>·<span class="ha">a</span> = <span class="hMG">mg</span>·<span class="hb">b</span>
+        &nbsp;⟹&nbsp;
+        <span class="hF">F</span> = <span class="hMG">mg</span>·<span class="hb">b</span>/<span class="ha">a</span>
+        = ${mg_val} · ${fracB} / ${fracA} = <b>${Freq.toFixed(2)} ${u}</b>
+        ${isQ?`<br><span style="color:#888;font-size:0.85em;">${s.quarterNote}</span>`:''}
       </div>
 
-      <div style="padding:8px 12px; border-radius:8px; font-size:0.9rem;
-           background:${balanced ? '#f0fdf4' : '#fef9c3'}; border: 1px solid ${balanced ? '#86efac' : '#fde68a'};">
-        Сейчас:&nbsp;
+      <div style="padding:8px 12px;border-radius:8px;font-size:0.9rem;
+           background:${balanced?'#f0fdf4':'#fef9c3'};border:1px solid ${balanced?'#86efac':'#fde68a'};">
+        ${s.nowLabel}:&nbsp;
         <span class="hF">F·a</span> = <b>${(F*af).toFixed(2)}</b>
         &nbsp;↺ vs ↻&nbsp;
         <span class="hMG">mg·b</span> = <b>${(m*G*(0.5-af)).toFixed(2)}</b>
         &nbsp;&nbsp;
-        ${balanced
-          ? '<span style="color:#166534;font-weight:700;">✓ Равны — равновесие!</span>'
-          : `<span style="color:#92400e;font-weight:700;">разность ${Math.abs(F*af - m*G*(0.5-af)).toFixed(2)} — балка вращается</span>`}
+        <span style="font-weight:700;color:${balanced?'#166534':'#92400e'};">
+          ${balanced ? s.balanced : s.unbalanced(Math.abs(F*af-m*G*(0.5-af)).toFixed(2))}
+        </span>
       </div>
 
       <div class="answer">
-        <span class="hF">F</span> = <span class="hMG">mg</span>·<span class="hb">b</span> / <span class="ha">a</span>
-        = ${mg_val} × ${fracB} / ${fracA}
-        = <b>${Freq.toFixed(2)} Н</b>
+        <span class="hF">F</span> = <span class="hMG">mg</span>·<span class="hb">b</span>/<span class="ha">a</span>
+        = ${mg_val} × ${fracB} / ${fracA} = <b>${Freq.toFixed(2)} ${u}</b>
       </div>
     </div>
   `;
 }
 
 function syncFmax(){
-  const m  = parseFloat(document.getElementById('sM').value);
-  const af = parseFloat(document.getElementById('sA').value);
-  const Freq = m * G * (0.5 - af) / af;
-  const sl = document.getElementById('sF');
-  sl.max = Math.ceil(Freq * 2.5 / 10) * 10;
+  const m=parseFloat(document.getElementById('sM').value);
+  const af=parseFloat(document.getElementById('sA').value);
+  const Freq=m*G*(0.5-af)/af;
+  document.getElementById('sF').max=Math.ceil(Freq*2.5/10)*10;
 }
 
-document.getElementById('sM').oninput = () => {
-  document.getElementById('vM').textContent = document.getElementById('sM').value + ' кг';
-  syncFmax(); draw();
+document.getElementById('sM').oninput=()=>{
+  document.getElementById('vM').textContent=S().valM(document.getElementById('sM').value);
+  syncFmax();draw();
 };
-document.getElementById('sA').oninput = () => {
-  const v = parseFloat(document.getElementById('sA').value);
-  document.getElementById('vA').textContent = toFrac(v) + ' L (' + v.toFixed(2) + ')';
-  syncFmax(); draw();
+document.getElementById('sA').oninput=()=>{
+  const v=parseFloat(document.getElementById('sA').value);
+  document.getElementById('vA').textContent=S().valA(toFrac(v),v.toFixed(2));
+  syncFmax();draw();
 };
-document.getElementById('sF').oninput = () => {
-  document.getElementById('vF').textContent = document.getElementById('sF').value + ' Н';
+document.getElementById('sF').oninput=()=>{
+  document.getElementById('vF').textContent=S().valF(document.getElementById('sF').value);
   draw();
 };
 
 function resize(){
-  const W = Math.min(680, window.innerWidth - 32);
-  cv.width = W; cv.height = Math.round(W * 0.58);
-  draw();
+  const W=Math.min(680,window.innerWidth-32);
+  cv.width=W;cv.height=Math.round(W*0.58);draw();
 }
-window.addEventListener('resize', resize);
+window.addEventListener('resize',resize);
+updateStaticText();
 resize();
 syncFmax();
 setEquilibrium();

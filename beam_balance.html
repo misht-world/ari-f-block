@@ -457,31 +457,40 @@ function draw(){
       <div class="sol-title">Объяснение по шагам</div>
 
       <div class="explain-block" style="border-left:3px solid #6366f1;">
-        <div class="explain-q">Почему вес записан как <span class="hMG">mg</span>, а искомая сила как <span class="hF">F</span> — ведь в нашей задаче они равны?</div>
-        <b><span class="hMG">mg</span> — это вес тела.</b> Он задан природой и не зависит от нас:
-        масса тела <b>m = ${m} кг</b> умножается на ускорение свободного падения
-        <b>g = 9.81 м/с²</b>, и получается сила, с которой Земля притягивает балку.
-        Мы не выбираем <span class="hMG">mg</span> — оно просто есть.<br><br>
-        <b><span class="hF">F</span> — это сила, которую прикладываем мы.</b>
-        Она неизвестна заранее, и именно её мы ищем из условия равновесия.
-        Мы можем приложить любую силу — задача спрашивает, какая из них
-        удержит балку горизонтально.<br><br>
-        <b>Почему они совпадают числом при упоре на ¼L?</b><br>
-        Потому что <span class="ha">a</span> = <span class="hb">b</span> = ¼L —
-        оба плеча одинаковы. Подставляем в формулу:<br>
+        <div class="explain-q">Чем отличаются масса <b>m</b>, вес <span class="hMG">mg</span> и сила <span class="hF">F</span>?</div>
+
+        <b>m = ${m} кг</b> — это <em>масса</em>: сколько вещества в балке.
+        Её измеряют в килограммах. Сама по себе масса не давит и не тянет.<br><br>
+
+        <b><span class="hMG">mg</span> = m · g = ${m} · 9.81 = ${mg_val} Н</b> — это <em>сила тяжести</em> (вес).
+        Земля притягивает балку с этой силой. Она уже задана — мы её не выбираем,
+        она зависит только от массы балки.<br><br>
+
+        <b><span class="hF">F</span></b> — это <em>наша</em> сила, которую мы прикладываем к
+        короткому концу. Она неизвестна заранее. Именно её мы ищем.<br><br>
+
+        <b>Общая формула (для любого положения упора):</b><br>
         <span class="hF">F</span> = <span class="hMG">mg</span> · <span class="hb">b</span> / <span class="ha">a</span>
-        = <span class="hMG">mg</span> · <b>(¼L) / (¼L)</b> = <span class="hMG">mg</span> · 1 = <span class="hMG">mg</span><br><br>
-        ${Math.abs(af - 0.25) < 0.02
-          ? `<span style="background:#dcfce7;padding:3px 8px;border-radius:5px;color:#166534;">
-              Сейчас упор на ¼L → F = mg = <b>${Freq.toFixed(2)} Н</b> ✓
-             </span>`
-          : `<span style="background:#fef9c3;padding:3px 8px;border-radius:5px;color:#92400e;">
-              Сейчас упор не на ¼L, поэтому F ≠ mg:&nbsp;
-              F = <b>${Freq.toFixed(2)} Н</b>, mg = <b>${mg_val} Н</b>
-             </span>`}
-        <br><br>
-        Подвигай ползунок <b>«Упор»</b> — и увидишь, что при любом другом
-        положении упора F и mg становятся разными.
+        &nbsp;=&nbsp; ${mg_val} · ${fracB} / ${fracA}
+        &nbsp;=&nbsp; <b>${Freq.toFixed(2)} Н</b><br><br>
+
+        <b>Почему при упоре на ¼L получается F = mg — простое совпадение?</b><br>
+        Нет, не случайность. При упоре на ¼L оба плеча равны:
+        <span class="ha">a</span> = ¼L и <span class="hb">b</span> = ½L − ¼L = ¼L.
+        В формуле они сокращаются:<br>
+        <span class="hF">F</span> = <span class="hMG">mg</span> · <b>¼L / ¼L</b>
+        = <span class="hMG">mg</span> · 1 = <span class="hMG">mg</span><br><br>
+
+        При <em>любом другом</em> положении упора плечи разные — и <span class="hF">F</span> ≠ <span class="hMG">mg</span>:<br>
+        <span style="background:${Math.abs(af-0.25)<0.02?'#dcfce7':'#fef9c3'};padding:3px 8px;border-radius:5px;color:${Math.abs(af-0.25)<0.02?'#166534':'#92400e'};">
+          Сейчас: упор на ${toFrac(af)}L →
+          <span class="ha">a</span> = ${fracA}L,
+          <span class="hb">b</span> = ${fracB}L,
+          <span class="hF">F</span> = <b>${Freq.toFixed(2)} Н</b>,
+          <span class="hMG">mg</span> = <b>${mg_val} Н</b>
+          ${Math.abs(af-0.25)<0.02 ? '→ F = mg ✓' : '→ F ≠ mg'}
+        </span><br><br>
+        Подвигай ползунок <b>«Упор»</b> — и сразу увидишь как F меняется, а mg нет.
       </div>
 
       <div class="explain-block" style="border-left:3px solid #ef4444;">

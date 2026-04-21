@@ -80,6 +80,30 @@
   .ha  { color: #7c3aed; font-weight: 700; }
   .hb  { color: #db2477; font-weight: 700; }
 
+  .quiz-title { font-size: 0.78rem; font-weight: 700; color: #0369a1; text-transform: uppercase; letter-spacing: .05em; margin-bottom: 10px; }
+  .quiz-row { display: flex; align-items: center; gap: 8px; margin-top: 10px; flex-wrap: wrap; }
+  .quiz-input {
+    width: 110px; padding: 8px 12px; font-size: 1rem; font-weight: 700;
+    border: 2px solid #cbd5e1; border-radius: 8px; outline: none;
+    transition: border-color .15s; text-align: center;
+  }
+  .quiz-input:focus { border-color: #2563eb; }
+  .quiz-input.correct { border-color: #16a34a; background: #f0fdf4; }
+  .quiz-input.wrong   { border-color: #ef4444; background: #fef2f2; }
+  .quiz-btn {
+    padding: 8px 18px; font-size: 0.9rem; font-weight: 700;
+    border: none; border-radius: 8px; cursor: pointer; transition: background .15s;
+  }
+  .quiz-btn-check  { background: #2563eb; color: #fff; }
+  .quiz-btn-check:hover  { background: #1d4ed8; }
+  .quiz-btn-reveal { background: #f1f5f9; color: #475569; border: 1px solid #cbd5e1; }
+  .quiz-btn-reveal:hover { background: #e2e8f0; }
+  .quiz-dots { display: flex; gap: 5px; }
+  .quiz-dot { width: 12px; height: 12px; border-radius: 50%; background: #e2e8f0; }
+  .quiz-dot.used   { background: #ef4444; }
+  .quiz-dot.solved { background: #16a34a; }
+  .quiz-feedback { margin-top: 8px; font-size: 0.88rem; font-weight: 600; min-height: 20px; }
+
   .legend { display: flex; flex-wrap: wrap; gap: 8px 18px; font-size: 0.8rem; color: #555; }
   .li { display: flex; align-items: center; gap: 5px; }
   .ld { width: 11px; height: 11px; border-radius: 50%; flex-shrink: 0; }
@@ -125,6 +149,8 @@
   <button class="btn-eq" id="btnEq" onclick="setEquilibrium()"></button>
   <div style="margin-top:8px;font-size:0.78rem;color:#999;text-align:center;" id="hint"></div>
 </div>
+
+<div class="card" id="quizCard" style="display:none;"></div>
 
 <div class="card" id="sol"></div>
 
@@ -360,6 +386,120 @@ const STRINGS = {
 let curLang = 'ru';
 const S = () => STRINGS[curLang];
 
+// ── Quiz state ────────────────────────────────────────────────────────────────
+let quizAttempts = 0;
+let quizSolved   = false;
+let quizRevealed = false;
+let quizSavedInput = '';
+
+function isQuizMode(){
+  const af = parseFloat(document.getElementById('sA').value);
+  return Math.abs(af - 0.25) > 0.015;
+}
+function showFullSolution(){
+  return !isQuizMode() || quizSolved || quizRevealed;
+}
+function resetQuiz(){
+  quizAttempts = 0; quizSolved = false; quizRevealed = false; quizSavedInput = '';
+}
+
+function checkAnswer(){
+  const m   = parseFloat(document.getElementById('sM').value);
+  const af  = parseFloat(document.getElementById('sA').value);
+  const Freq = m * G * (0.5 - af) / af;
+  const inp  = document.getElementById('quizInput');
+  if (!inp) return;
+  quizSavedInput = inp.value;
+  const userVal = parseFloat(inp.value.replace(',', '.'));
+
+  if (isNaN(userVal) || userVal <= 0) {
+    document.getElementById('quizFeedback').innerHTML =
+      `<span style="color:#ef4444;">${curLang==='ru'?'Введи число > 0':'Enter a number > 0'}</span>`;
+    return;
+  }
+  const tol = Math.max(Freq * 0.04, 0.5);
+  quizAttempts++;
+  if (Math.abs(userVal - Freq) <= tol) { quizSolved = true; }
+  else if (quizAttempts >= 3)           { quizRevealed = true; }
+  draw();
+}
+
+function revealSolution(){
+  quizRevealed = true; draw();
+}
+
+function renderQuizCard(){
+  const card = document.getElementById('quizCard');
+  const m    = parseFloat(document.getElementById('sM').value);
+  const af   = parseFloat(document.getElementById('sA').value);
+  const Freq = m * G * (0.5 - af) / af;
+  const s    = S();
+  const u    = s.unit_N;
+  const ru   = curLang === 'ru';
+
+  if (!isQuizMode()) { card.style.display = 'none'; return; }
+  card.style.display = 'block';
+
+  const attLeft = 3 - quizAttempts;
+  const dots = [0,1,2].map(i => {
+    if (quizSolved && i === quizAttempts - 1) return `<div class="quiz-dot solved"></div>`;
+    if (i < quizAttempts) return `<div class="quiz-dot used"></div>`;
+    return `<div class="quiz-dot"></div>`;
+  }).join('');
+
+  if (quizSolved) {
+    card.innerHTML = `
+      <div class="quiz-title">${ru?'✓ Правильно!':'✓ Correct!'}</div>
+      <div style="font-size:1rem;color:#166534;">
+        F = <b>${Freq.toFixed(2)} ${u}</b> —
+        ${ru?'решение показано ниже':'full solution shown below'}
+      </div>`;
+    return;
+  }
+
+  if (quizRevealed) {
+    card.innerHTML = `
+      <div class="quiz-title">${ru?'Правильный ответ:':'Correct answer:'}</div>
+      <div style="font-size:1rem;color:#92400e;">
+        F = <b>${Freq.toFixed(2)} ${u}</b> —
+        ${ru?'решение показано ниже':'full solution shown below'}
+      </div>`;
+    return;
+  }
+
+  let feedbackHTML = '';
+  if (quizAttempts > 0) {
+    feedbackHTML = `<div class="quiz-feedback" style="color:#ef4444;">
+      ${ru?'Неверно.':'Wrong.'} ${ru?'Осталось попыток:':'Attempts left:'} <b>${attLeft}</b>
+    </div>`;
+  }
+
+  card.innerHTML = `
+    <div class="quiz-title" style="color:#0369a1;">
+      🧮 ${ru?'Вычисли F для равновесия — используй формулы и значения выше':
+               'Calculate F for equilibrium — use the formulas and values above'}
+    </div>
+    <div class="quiz-row">
+      <input id="quizInput" class="quiz-input${quizAttempts>0?' wrong':''}"
+             type="number" min="0" step="0.1"
+             placeholder="0.00" value="${quizSavedInput}"
+             onkeydown="if(event.key==='Enter')checkAnswer()">
+      <span style="font-weight:700;">${u}</span>
+      <button class="quiz-btn quiz-btn-check" onclick="checkAnswer()">
+        ${ru?'Проверить':'Check'}
+      </button>
+      ${quizAttempts > 0 ? `<button class="quiz-btn quiz-btn-reveal" onclick="revealSolution()">
+        ${ru?'Показать ответ':'Show answer'}
+      </button>` : ''}
+      <div class="quiz-dots">${dots}</div>
+    </div>
+    ${feedbackHTML}
+  `;
+  // restore focus
+  const inp = document.getElementById('quizInput');
+  if (inp && quizAttempts > 0) inp.select();
+}
+
 // ── Canvas & drawing ──────────────────────────────────────────────────────────
 const cv = document.getElementById('c');
 const ctx = cv.getContext('2d');
@@ -460,6 +600,7 @@ function setEquilibrium(){
 }
 
 function draw(){
+  renderQuizCard();
   const W=cv.width,H=cv.height;
   const m  = parseFloat(document.getElementById('sM').value);
   const af = parseFloat(document.getElementById('sA').value);
@@ -572,7 +713,7 @@ function draw(){
       <div class="frow"><span class="sym"><span class="hN">N</span></span><span class="expr">${s.vN}</span><span class="numval hN">${mg_val} + ${F.toFixed(1)} = ${N_val} ${u}</span></div>
     </div>
 
-    <div style="margin-top:14px;display:flex;flex-direction:column;gap:10px;">
+    ${showFullSolution() ? `<div style="margin-top:14px;display:flex;flex-direction:column;gap:10px;">
       <div class="sol-title">${s.titAlgo}</div>
 
       <div class="explain-block" style="border-left:3px solid #0ea5e9;background:#f0f9ff;">
@@ -645,7 +786,7 @@ function draw(){
         <span class="hF">F</span> = <span class="hMG">mg</span>·<span class="hb">b</span>/<span class="ha">a</span>
         = ${mg_val} × ${fracB} / ${fracA} = <b>${Freq.toFixed(2)} ${u}</b>
       </div>
-    </div>
+    </div>` : ''}
   `;
 }
 
@@ -658,12 +799,12 @@ function syncFmax(){
 
 document.getElementById('sM').oninput=()=>{
   document.getElementById('vM').textContent=S().valM(document.getElementById('sM').value);
-  syncFmax();draw();
+  resetQuiz(); syncFmax(); draw();
 };
 document.getElementById('sA').oninput=()=>{
   const v=parseFloat(document.getElementById('sA').value);
   document.getElementById('vA').textContent=S().valA(toFrac(v),v.toFixed(2));
-  syncFmax();draw();
+  resetQuiz(); syncFmax(); draw();
 };
 document.getElementById('sF').oninput=()=>{
   document.getElementById('vF').textContent=S().valF(document.getElementById('sF').value);

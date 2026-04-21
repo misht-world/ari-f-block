@@ -456,6 +456,34 @@ function draw(){
 
       <div class="sol-title">Объяснение по шагам</div>
 
+      <div class="explain-block" style="border-left:3px solid #6366f1;">
+        <div class="explain-q">Почему вес записан как <span class="hMG">mg</span>, а искомая сила как <span class="hF">F</span> — ведь в нашей задаче они равны?</div>
+        <b><span class="hMG">mg</span> — это вес тела.</b> Он задан природой и не зависит от нас:
+        масса тела <b>m = ${m} кг</b> умножается на ускорение свободного падения
+        <b>g = 9.81 м/с²</b>, и получается сила, с которой Земля притягивает балку.
+        Мы не выбираем <span class="hMG">mg</span> — оно просто есть.<br><br>
+        <b><span class="hF">F</span> — это сила, которую прикладываем мы.</b>
+        Она неизвестна заранее, и именно её мы ищем из условия равновесия.
+        Мы можем приложить любую силу — задача спрашивает, какая из них
+        удержит балку горизонтально.<br><br>
+        <b>Почему они совпадают числом при упоре на ¼L?</b><br>
+        Потому что <span class="ha">a</span> = <span class="hb">b</span> = ¼L —
+        оба плеча одинаковы. Подставляем в формулу:<br>
+        <span class="hF">F</span> = <span class="hMG">mg</span> · <span class="hb">b</span> / <span class="ha">a</span>
+        = <span class="hMG">mg</span> · <b>(¼L) / (¼L)</b> = <span class="hMG">mg</span> · 1 = <span class="hMG">mg</span><br><br>
+        ${Math.abs(af - 0.25) < 0.02
+          ? `<span style="background:#dcfce7;padding:3px 8px;border-radius:5px;color:#166534;">
+              Сейчас упор на ¼L → F = mg = <b>${Freq.toFixed(2)} Н</b> ✓
+             </span>`
+          : `<span style="background:#fef9c3;padding:3px 8px;border-radius:5px;color:#92400e;">
+              Сейчас упор не на ¼L, поэтому F ≠ mg:&nbsp;
+              F = <b>${Freq.toFixed(2)} Н</b>, mg = <b>${mg_val} Н</b>
+             </span>`}
+        <br><br>
+        Подвигай ползунок <b>«Упор»</b> — и увидишь, что при любом другом
+        положении упора F и mg становятся разными.
+      </div>
+
       <div class="explain-block" style="border-left:3px solid #ef4444;">
         <div class="explain-q">Почему упор — это точка вращения?</div>
         Балка опирается на упор в одной точке. Если нет равновесия, она начнёт

@@ -93,6 +93,18 @@
   .ha  { color: #7c3aed; font-weight: 700; }
   .hb  { color: #db2777; font-weight: 700; }
 
+  .algo-step {
+    display: flex; gap: 10px; align-items: flex-start;
+    margin-top: 8px; font-size: 0.88rem; line-height: 1.6;
+  }
+  .algo-num {
+    flex-shrink: 0; width: 22px; height: 22px;
+    background: #0ea5e9; color: #fff;
+    border-radius: 50%; font-weight: 700; font-size: 0.78rem;
+    display: flex; align-items: center; justify-content: center;
+    margin-top: 1px;
+  }
+
   .explain-block {
     background: #f8fafc; border-radius: 8px;
     padding: 10px 14px 10px 12px;
@@ -454,7 +466,57 @@ function draw(){
 
     <div style="margin-top:14px; display:flex; flex-direction:column; gap:10px;">
 
-      <div class="sol-title">Объяснение по шагам</div>
+      <div class="sol-title">Как решать задачи на равновесие рычага</div>
+
+      <div class="explain-block" style="border-left:3px solid #0ea5e9; background:#f0f9ff;">
+        <div class="explain-q" style="color:#0369a1;">Общий алгоритм — применимый к любой такой задаче</div>
+
+        <div class="algo-step"><span class="algo-num">1</span>
+          <span><b>Найди точку вращения.</b> Это упор, ось, шарнир — та точка,
+          вокруг которой тело может повернуться. В нашей задаче это упор.</span>
+        </div>
+
+        <div class="algo-step"><span class="algo-num">2</span>
+          <span><b>Выпиши все силы</b>, которые действуют на тело.
+          Здесь их три: сила тяжести <span class="hMG">mg</span> вниз,
+          наша сила <span class="hF">F</span> вниз, реакция опоры <span class="hN">N</span> вверх.
+          Реакция опоры приложена прямо в точке вращения, поэтому её
+          <em>плечо равно нулю</em> и момент она не создаёт — можно сразу исключить.</span>
+        </div>
+
+        <div class="algo-step"><span class="algo-num">3</span>
+          <span><b>Для каждой оставшейся силы найди плечо</b> — перпендикулярное
+          расстояние от точки вращения до линии действия силы.
+          Если сила вертикальная, плечо — это просто горизонтальное расстояние
+          от упора до точки приложения:
+          <span class="ha">a</span> для <span class="hF">F</span> и
+          <span class="hb">b</span> для <span class="hMG">mg</span>.</span>
+        </div>
+
+        <div class="algo-step"><span class="algo-num">4</span>
+          <span><b>Запиши момент каждой силы:</b> момент = сила × плечо.
+          Определи направление: по часовой ↻ или против ↺.
+          Здесь <span class="hMG">mg</span> тянет правый конец вниз (↻),
+          а <span class="hF">F</span> давит на левый конец вниз (↺).</span>
+        </div>
+
+        <div class="algo-step"><span class="algo-num">5</span>
+          <span><b>Запиши условие равновесия:</b> сумма моментов = 0,
+          то есть момент ↻ = моменту ↺.<br>
+          <span class="hF">F</span> · <span class="ha">a</span> = <span class="hMG">mg</span> · <span class="hb">b</span></span>
+        </div>
+
+        <div class="algo-step"><span class="algo-num">6</span>
+          <span><b>Реши уравнение</b> относительно неизвестного.
+          Неизвестна <span class="hF">F</span> — делим обе части на <span class="ha">a</span>:<br>
+          <span class="hF">F</span> = <span class="hMG">mg</span> · <span class="hb">b</span> / <span class="ha">a</span></span>
+        </div>
+
+        <div class="algo-step"><span class="algo-num">7</span>
+          <span><b>Подставь числа</b> и получи ответ:<br>
+          <span class="hF">F</span> = ${mg_val} · ${fracB} / ${fracA} = <b>${Freq.toFixed(2)} Н</b></span>
+        </div>
+      </div>
 
       <div class="explain-block" style="border-left:3px solid #6366f1;">
         <div class="explain-q">Чем отличаются масса <b>m</b>, вес <span class="hMG">mg</span> и сила <span class="hF">F</span>?</div>

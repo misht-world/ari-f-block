@@ -79,6 +79,7 @@
   .hN  { color: #16a34a; font-weight: 700; }
   .ha  { color: #7c3aed; font-weight: 700; }
   .hb  { color: #db2477; font-weight: 700; }
+  .hT  { color: #16a34a; font-weight: 700; }
 
   .quiz-title { font-size: 0.78rem; font-weight: 700; color: #0369a1; text-transform: uppercase; letter-spacing: .05em; margin-bottom: 10px; }
   .quiz-row { display: flex; align-items: center; gap: 8px; margin-top: 10px; flex-wrap: wrap; }
@@ -104,6 +105,19 @@
   .quiz-dot.solved { background: #16a34a; }
   .quiz-feedback { margin-top: 8px; font-size: 0.88rem; font-weight: 600; min-height: 20px; }
 
+  .tabs {
+    display: flex; gap: 2px; width: 100%; max-width: 680px;
+    background: #e2e8f0; padding: 4px; border-radius: 12px;
+  }
+  .tab-btn {
+    flex: 1; padding: 10px 16px; font-size: 0.88rem; font-weight: 700;
+    background: transparent; border: none; cursor: pointer;
+    border-radius: 9px; color: #64748b; transition: all .15s;
+  }
+  .tab-btn.active { background: #fff; color: #1e293b; box-shadow: 0 1px 4px rgba(0,0,0,0.1); }
+  .tab-panel { display: none; width: 100%; flex-direction: column; align-items: center; gap: 16px; }
+  .tab-panel.active { display: flex; }
+
   .legend { display: flex; flex-wrap: wrap; gap: 8px 18px; font-size: 0.8rem; color: #555; }
   .li { display: flex; align-items: center; gap: 5px; }
   .ld { width: 11px; height: 11px; border-radius: 50%; flex-shrink: 0; }
@@ -113,49 +127,81 @@
 
 <button class="lang-btn" id="langBtn" onclick="toggleLang()">EN</button>
 
-<h1 id="pageH1"></h1>
+<div class="tabs">
+  <button class="tab-btn active" id="tabBtnBeam"   onclick="switchTab('beam')"></button>
+  <button class="tab-btn"        id="tabBtnPulley" onclick="switchTab('pulley')"></button>
+</div>
 
-<div class="card" style="padding:14px 14px 10px;">
-  <canvas id="c"></canvas>
-  <div class="torque-row">
-    <span class="torque-label" style="color:#fbbf24;" id="tLabelCW"></span>
-    <div class="torque-bar-wrap">
-      <div class="torque-bar-cw"  id="bCW"  style="width:50%"></div>
-      <div class="torque-bar-ccw" id="bCCW" style="width:50%"></div>
+<div class="tab-panel active" id="tab-beam">
+  <h1 id="pageH1"></h1>
+
+  <div class="card" style="padding:14px 14px 10px;">
+    <canvas id="c"></canvas>
+    <div class="torque-row">
+      <span class="torque-label" style="color:#fbbf24;" id="tLabelCW"></span>
+      <div class="torque-bar-wrap">
+        <div class="torque-bar-cw"  id="bCW"  style="width:50%"></div>
+        <div class="torque-bar-ccw" id="bCCW" style="width:50%"></div>
+      </div>
+      <span class="torque-label" style="color:#60a5fa;" id="tLabelCCW"></span>
+      <div class="balance-badge badge-ok" id="badge"></div>
     </div>
-    <span class="torque-label" style="color:#60a5fa;" id="tLabelCCW"></span>
-    <div class="balance-badge badge-ok" id="badge"></div>
+  </div>
+
+  <div class="card">
+    <div class="controls">
+      <div class="ctrl">
+        <label id="lM"></label>
+        <input id="sM" type="range" min="1" max="50" value="10" step="1">
+        <div class="val" id="vM"></div>
+      </div>
+      <div class="ctrl">
+        <label id="lA"></label>
+        <input id="sA" type="range" min="0.02" max="0.50" value="0.25" step="0.01">
+        <div class="val" id="vA"></div>
+      </div>
+      <div class="ctrl">
+        <label id="lF"></label>
+        <input id="sF" type="range" min="0" max="500" value="98" step="1">
+        <div class="val" id="vF"></div>
+      </div>
+    </div>
+    <button class="btn-eq" id="btnEq" onclick="setEquilibrium()"></button>
+    <div style="margin-top:8px;font-size:0.78rem;color:#999;text-align:center;" id="hint"></div>
+  </div>
+
+  <div class="card" id="quizCard" style="display:none;"></div>
+
+  <div class="card" id="sol"></div>
+
+  <div class="card">
+    <div class="legend" id="legend"></div>
   </div>
 </div>
 
-<div class="card">
-  <div class="controls">
-    <div class="ctrl">
-      <label id="lM"></label>
-      <input id="sM" type="range" min="1" max="50" value="10" step="1">
-      <div class="val" id="vM"></div>
-    </div>
-    <div class="ctrl">
-      <label id="lA"></label>
-      <input id="sA" type="range" min="0.02" max="0.50" value="0.25" step="0.01">
-      <div class="val" id="vA"></div>
-    </div>
-    <div class="ctrl">
-      <label id="lF"></label>
-      <input id="sF" type="range" min="0" max="500" value="98" step="1">
-      <div class="val" id="vF"></div>
-    </div>
+<div class="tab-panel" id="tab-pulley">
+  <h1 id="pageH1P"></h1>
+
+  <div class="card" style="padding:14px 14px 10px;">
+    <canvas id="cP"></canvas>
   </div>
-  <button class="btn-eq" id="btnEq" onclick="setEquilibrium()"></button>
-  <div style="margin-top:8px;font-size:0.78rem;color:#999;text-align:center;" id="hint"></div>
-</div>
 
-<div class="card" id="quizCard" style="display:none;"></div>
+  <div class="card">
+    <div class="controls">
+      <div class="ctrl">
+        <label id="lMp"></label>
+        <input id="sMp" type="range" min="1" max="100" value="20" step="1">
+        <div class="val" id="vMp"></div>
+      </div>
+    </div>
+    <div style="margin-top:8px;font-size:0.78rem;color:#999;text-align:center;" id="hintP"></div>
+  </div>
 
-<div class="card" id="sol"></div>
+  <div class="card" id="solP"></div>
 
-<div class="card">
-  <div class="legend" id="legend"></div>
+  <div class="card">
+    <div class="legend" id="legendP"></div>
+  </div>
 </div>
 
 <script>
@@ -273,6 +319,78 @@ const STRINGS = {
       ['#7c3aed', 'a',  '— плечо F (упор → короткий конец)'],
       ['#db2477', 'b',  '— плечо mg (упор → ЦТ)'],
     ],
+
+    tabBeam: 'Балка на упоре',
+    tabPulley: 'Подвижный блок',
+    pulley: {
+      h1: 'Подвижный блок — какая сила <em>F</em> нужна чтобы удержать груз массой <em>m</em>?',
+      lM: 'Масса груза',
+      valM: m => `${m} кг`,
+      hint: 'Двигай ползунок массы — смотри как меняются T и F',
+      titFormulas: 'Используемые формулы',
+      titValues:   'Используемые величины',
+      titAlgo:     'Как решать задачи на блоки',
+      titExplain:  'Объяснение по шагам',
+      fGrav:  'сила тяжести груза',
+      fEquil: 'равновесие блока (две верёвки ↑ уравновешивают груз ↓)',
+      fT:     'натяжение в каждой верёвке',
+      fF:     'сила руки равна натяжению верёвки',
+      vMass:  'масса груза',
+      vG:     'ускорение свободного падения',
+      vMG:    'сила тяжести = m × g',
+      vT:     'натяжение в одной верёвке',
+      vF:     'сила, которую тянет рука',
+      algoGeneral: 'Общий алгоритм — для задач с блоками',
+      algoSteps: [
+        `<b>Выдели «свободное тело».</b> Здесь это подвижный блок вместе с грузом —
+         именно для него пишем равновесие сил.`,
+        `<b>Выпиши все силы</b>: вниз — сила тяжести <span class="hMG">mg</span>,
+         вверх — две силы натяжения <span class="hT">T</span>
+         (с двух сторон верёвки, обхватывающей блок).`,
+        `<b>Идеальный блок и идеальная верёвка:</b> блок невесом, трения нет →
+         натяжение по всей верёвке одинаковое. Поэтому в обеих ветках одна и та же
+         <span class="hT">T</span>.`,
+        `<b>Условие равновесия</b> (сумма сил = 0, вверх = вниз):<br>
+         2<span class="hT">T</span> = <span class="hMG">mg</span>`,
+        `<b>Выражаем T:</b> <span class="hT">T</span> = <span class="hMG">mg</span> / 2.`,
+        `<b>Рука тянет ту же верёвку</b> — значит <span class="hF">F</span> = <span class="hT">T</span>:<br>
+         <span class="hF">F</span> = <span class="hMG">mg</span> / 2.`,
+        `<b>Подставь числа</b> и получи ответ:`,
+      ],
+      eqTitle: 'Почему подвижный блок уменьшает силу в 2 раза?',
+      eqBody: `Верёвка обхватывает блок и идёт двумя ветками вверх — одна закреплена
+               на потолке, другую тянет рука. Груз весит <span class="hMG">mg</span>,
+               но этот вес делится <b>поровну между двумя ветками</b> верёвки.
+               Поэтому каждая ветка держит всего половину веса — и рука прилагает
+               силу <span class="hF">F</span> = <span class="hMG">mg</span>/2.`,
+      ropeQ:   'Почему натяжение одинаковое в обеих ветках?',
+      ropeA:   `Верёвка одна и та же, блок невесом и без трения. Если натянуть один конец
+               сильнее, блок бы разогнался — но он в равновесии. Значит во всей верёвке
+               натяжение одно и то же число, <span class="hT">T</span>.`,
+      fEqTQ:   'Почему <span class="hF">F</span> = <span class="hT">T</span>?',
+      fEqTA:   `Рука держит свободный конец верёвки. Какое натяжение в верёвке — такую же
+               силу ощущает и рука. Поэтому <span class="hF">F</span> = <span class="hT">T</span>.`,
+      idealQ:  'Что значит «идеальный блок»?',
+      idealA:  `Блок не имеет массы (иначе его вес тоже пришлось бы держать), в оси нет
+               трения (иначе часть силы терялась бы на преодоление трения).
+               В реальности F будет чуть больше mg/2.`,
+      tradeQ:  'А есть ли «бесплатный выигрыш» в силе?',
+      tradeA:  `Нет. Сила уменьшается в 2 раза — но рука проходит <b>в 2 раза больший путь</b>,
+               чем поднимается груз. Работа (сила × путь) сохраняется: A = mg·h одинакова.
+               Это «золотое правило механики».`,
+
+      legend: [
+        ['#d97706', 'mg', '— сила тяжести груза (вниз)'],
+        ['#16a34a', 'T',  '— натяжение в верёвке (одинаковое в обеих ветках)'],
+        ['#2563eb', 'F',  '— сила руки (равна T)'],
+      ],
+      labelLoad:   'Груз',
+      labelPulley: 'Подвижный блок',
+      labelFixed:  'Неподвижный блок',
+      labelHand:   'Рука',
+      labelCeil:   'Потолок',
+      answerLabel: 'Ответ:',
+    },
   },
 
   en: {
@@ -380,6 +498,78 @@ const STRINGS = {
       ['#7c3aed', 'a',  '— F arm (pivot → short end)'],
       ['#db2477', 'b',  '— mg arm (pivot → CoM)'],
     ],
+
+    tabBeam: 'Beam on support',
+    tabPulley: 'Movable pulley',
+    pulley: {
+      h1: 'Movable pulley — what force <em>F</em> is needed to hold a load of mass <em>m</em>?',
+      lM: 'Load mass',
+      valM: m => `${m} kg`,
+      hint: 'Move the mass slider — watch T and F change',
+      titFormulas: 'Formulas',
+      titValues:   'Values',
+      titAlgo:     'How to solve pulley problems',
+      titExplain:  'Step-by-step explanation',
+      fGrav:  'weight of the load',
+      fEquil: 'pulley equilibrium (two ropes ↑ balance the load ↓)',
+      fT:     'tension in each rope segment',
+      fF:     'hand force equals rope tension',
+      vMass:  'load mass',
+      vG:     'gravitational acceleration',
+      vMG:    'weight = m × g',
+      vT:     'tension in one rope segment',
+      vF:     'force applied by the hand',
+      algoGeneral: 'General algorithm — for pulley problems',
+      algoSteps: [
+        `<b>Pick the free body.</b> Here it is the movable pulley together with the load —
+         we write force equilibrium for it.`,
+        `<b>List all forces</b>: downward — weight <span class="hMG">mg</span>;
+         upward — two tension forces <span class="hT">T</span>
+         (the two sides of the rope wrapped around the pulley).`,
+        `<b>Ideal pulley and ideal rope:</b> massless, frictionless →
+         tension is the same along the whole rope. So both branches pull with the same
+         <span class="hT">T</span>.`,
+        `<b>Equilibrium condition</b> (sum of forces = 0, up = down):<br>
+         2<span class="hT">T</span> = <span class="hMG">mg</span>`,
+        `<b>Solve for T:</b> <span class="hT">T</span> = <span class="hMG">mg</span> / 2.`,
+        `<b>The hand pulls the same rope</b> — therefore <span class="hF">F</span> = <span class="hT">T</span>:<br>
+         <span class="hF">F</span> = <span class="hMG">mg</span> / 2.`,
+        `<b>Substitute numbers</b> and get the answer:`,
+      ],
+      eqTitle: 'Why does a movable pulley cut the force in half?',
+      eqBody: `The rope wraps around the pulley and goes up in two branches — one attached
+               to the ceiling, the other pulled by the hand. The load weighs <span class="hMG">mg</span>,
+               but this weight is <b>shared equally between the two branches</b>.
+               So each branch holds only half the weight — and the hand applies
+               <span class="hF">F</span> = <span class="hMG">mg</span>/2.`,
+      ropeQ:   'Why is the tension the same in both branches?',
+      ropeA:   `It is the same rope, the pulley is massless and frictionless. If one side
+               were pulled harder, the pulley would accelerate — but it is in equilibrium.
+               So the tension everywhere in the rope is the same number <span class="hT">T</span>.`,
+      fEqTQ:   'Why is <span class="hF">F</span> = <span class="hT">T</span>?',
+      fEqTA:   `The hand holds the free end of the rope. Whatever tension is in the rope,
+               that is the force the hand must apply. So <span class="hF">F</span> = <span class="hT">T</span>.`,
+      idealQ:  'What does "ideal pulley" mean?',
+      idealA:  `The pulley has no mass (otherwise we would also have to support its weight),
+               and the axle has no friction (otherwise some force would be lost to friction).
+               In reality F will be slightly more than mg/2.`,
+      tradeQ:  'Is there a "free lunch" in force?',
+      tradeA:  `No. The force is halved — but the hand travels <b>twice as far</b> as the load
+               rises. Work (force × distance) is conserved: A = mg·h is the same.
+               This is the "golden rule of mechanics".`,
+
+      legend: [
+        ['#d97706', 'mg', '— weight of the load (down)'],
+        ['#16a34a', 'T',  '— rope tension (same in both branches)'],
+        ['#2563eb', 'F',  '— hand force (equals T)'],
+      ],
+      labelLoad:   'Load',
+      labelPulley: 'Movable pulley',
+      labelFixed:  'Fixed pulley',
+      labelHand:   'Hand',
+      labelCeil:   'Ceiling',
+      answerLabel: 'Answer:',
+    },
   }
 };
 
@@ -817,15 +1007,275 @@ document.getElementById('sF').oninput=()=>{
   draw();
 };
 
+// ── Pulley tab ────────────────────────────────────────────────────────────────
+const cvP = document.getElementById('cP');
+const ctxP = cvP.getContext('2d');
+
+function drawPulley(){
+  const W = cvP.width, H = cvP.height;
+  const m  = parseFloat(document.getElementById('sMp').value);
+  const mg = m * G;
+  const T  = mg / 2;
+  const F  = T;
+  const s  = S();
+  const p  = s.pulley;
+
+  ctxP.clearRect(0,0,W,H);
+
+  // Ceiling
+  const ceilY = 30;
+  ctxP.fillStyle = '#94a3b8';
+  ctxP.fillRect(0, 0, W, ceilY);
+  ctxP.strokeStyle = '#475569'; ctxP.lineWidth = 2;
+  ctxP.beginPath(); ctxP.moveTo(0, ceilY); ctxP.lineTo(W, ceilY); ctxP.stroke();
+  // hatching
+  ctxP.strokeStyle = '#cbd5e1'; ctxP.lineWidth = 1;
+  for(let x=6; x<W; x+=12){
+    ctxP.beginPath(); ctxP.moveTo(x, 0); ctxP.lineTo(x-8, ceilY-2); ctxP.stroke();
+  }
+  ctxP.font = '11px Segoe UI'; ctxP.fillStyle = '#475569'; ctxP.textAlign = 'left';
+  ctxP.fillText(p.labelCeil, 8, 16);
+
+  // Geometry: fixed anchor point on ceiling (left), fixed pulley on ceiling (right),
+  // movable pulley hanging below, load hanging from movable pulley, rope from fixed pulley going down to hand.
+  const anchorX = W*0.28, anchorY = ceilY;
+  const fixedX  = W*0.62, fixedY  = ceilY + 18;
+  const mvPulleyX = (anchorX + fixedX)/2, mvPulleyY = H*0.55;
+  const mvPulleyR = 22, fixedPulleyR = 14;
+  const handX = fixedX + 70, handY = H*0.78;
+
+  // Load (box) hanging from movable pulley
+  const loadW = 70 + Math.min(40, m*0.8), loadH = 40 + Math.min(30, m*0.6);
+  const loadX = mvPulleyX - loadW/2, loadY = mvPulleyY + mvPulleyR + 8;
+
+  // Small vertical rod from pulley to load
+  ctxP.strokeStyle = '#64748b'; ctxP.lineWidth = 2;
+  ctxP.beginPath(); ctxP.moveTo(mvPulleyX, mvPulleyY+mvPulleyR);
+  ctxP.lineTo(mvPulleyX, loadY); ctxP.stroke();
+
+  // Load box
+  const grd = ctxP.createLinearGradient(loadX, loadY, loadX, loadY+loadH);
+  grd.addColorStop(0, '#fde68a'); grd.addColorStop(1, '#f59e0b');
+  ctxP.fillStyle = grd;
+  ctxP.fillRect(loadX, loadY, loadW, loadH);
+  ctxP.strokeStyle = '#b45309'; ctxP.lineWidth = 1.5;
+  ctxP.strokeRect(loadX, loadY, loadW, loadH);
+  ctxP.font = 'bold 13px Segoe UI'; ctxP.fillStyle = '#78350f'; ctxP.textAlign = 'center';
+  ctxP.fillText(`m = ${m} кг`.replace('кг', s.unit_kg), mvPulleyX, loadY + loadH/2 + 5);
+
+  // Rope: anchor (ceiling) → movable pulley (left side) → over top → movable pulley (right side) → up to fixed pulley (left side) → over → down to hand
+  // Left branch: anchor to pulley left
+  const pLeftX = mvPulleyX - mvPulleyR, pLeftY = mvPulleyY;
+  const pRightX = mvPulleyX + mvPulleyR, pRightY = mvPulleyY;
+  ctxP.strokeStyle = '#334155'; ctxP.lineWidth = 2.2;
+  ctxP.beginPath(); ctxP.moveTo(anchorX, anchorY); ctxP.lineTo(pLeftX, pLeftY); ctxP.stroke();
+  // arc around movable pulley bottom
+  ctxP.beginPath(); ctxP.arc(mvPulleyX, mvPulleyY, mvPulleyR, Math.PI, 2*Math.PI, true); ctxP.stroke();
+  // Right branch: pulley right → up to fixed pulley left side
+  const fLeftX = fixedX - fixedPulleyR, fLeftY = fixedY;
+  ctxP.beginPath(); ctxP.moveTo(pRightX, pRightY); ctxP.lineTo(fLeftX, fLeftY); ctxP.stroke();
+  // arc around fixed pulley top
+  ctxP.beginPath(); ctxP.arc(fixedX, fixedY, fixedPulleyR, Math.PI, 0, true); ctxP.stroke();
+  // down to hand
+  const fRightX = fixedX + fixedPulleyR;
+  ctxP.beginPath(); ctxP.moveTo(fRightX, fixedY); ctxP.lineTo(handX, handY); ctxP.stroke();
+
+  // Movable pulley (circle)
+  const pgrd = ctxP.createRadialGradient(mvPulleyX-5, mvPulleyY-5, 3, mvPulleyX, mvPulleyY, mvPulleyR);
+  pgrd.addColorStop(0, '#e2e8f0'); pgrd.addColorStop(1, '#64748b');
+  ctxP.fillStyle = pgrd;
+  ctxP.beginPath(); ctxP.arc(mvPulleyX, mvPulleyY, mvPulleyR, 0, 2*Math.PI); ctxP.fill();
+  ctxP.strokeStyle = '#334155'; ctxP.lineWidth = 1.5; ctxP.stroke();
+  ctxP.fillStyle = '#334155';
+  ctxP.beginPath(); ctxP.arc(mvPulleyX, mvPulleyY, 3, 0, 2*Math.PI); ctxP.fill();
+
+  // Fixed pulley
+  ctxP.fillStyle = '#cbd5e1';
+  ctxP.beginPath(); ctxP.arc(fixedX, fixedY, fixedPulleyR, 0, 2*Math.PI); ctxP.fill();
+  ctxP.strokeStyle = '#475569'; ctxP.lineWidth = 1.5; ctxP.stroke();
+  ctxP.fillStyle = '#475569';
+  ctxP.beginPath(); ctxP.arc(fixedX, fixedY, 2.5, 0, 2*Math.PI); ctxP.fill();
+  // bracket to ceiling
+  ctxP.strokeStyle = '#475569'; ctxP.lineWidth = 2;
+  ctxP.beginPath(); ctxP.moveTo(fixedX, ceilY); ctxP.lineTo(fixedX, fixedY-fixedPulleyR); ctxP.stroke();
+
+  // Anchor triangle
+  ctxP.fillStyle = '#475569';
+  ctxP.beginPath();
+  ctxP.moveTo(anchorX, anchorY);
+  ctxP.lineTo(anchorX-6, anchorY+10);
+  ctxP.lineTo(anchorX+6, anchorY+10);
+  ctxP.closePath(); ctxP.fill();
+
+  // Hand (circle)
+  ctxP.fillStyle = '#fca5a5';
+  ctxP.beginPath(); ctxP.arc(handX, handY, 12, 0, 2*Math.PI); ctxP.fill();
+  ctxP.strokeStyle = '#b91c1c'; ctxP.lineWidth = 1.5; ctxP.stroke();
+  ctxP.font = '11px Segoe UI'; ctxP.fillStyle = '#334155'; ctxP.textAlign = 'center';
+  ctxP.fillText(p.labelHand, handX, handY+26);
+
+  // Tension labels (T on each branch)
+  ctxP.font = 'bold 13px Segoe UI'; ctxP.fillStyle = '#16a34a';
+  ctxP.fillText(`T = ${T.toFixed(1)} ${s.unit_N}`, (anchorX+pLeftX)/2 - 22, (anchorY+pLeftY)/2);
+  ctxP.fillText(`T = ${T.toFixed(1)} ${s.unit_N}`, (pRightX+fLeftX)/2 + 22, (pRightY+fLeftY)/2);
+
+  // Upward tension arrows on movable pulley
+  arrowP(pLeftX, pLeftY, pLeftX, pLeftY-38, '#16a34a', 2.5);
+  arrowP(pRightX, pRightY, pRightX, pRightY-38, '#16a34a', 2.5);
+
+  // mg arrow down from load
+  const mgLen = Math.min(70, 28 + m*0.6);
+  arrowP(mvPulleyX, loadY+loadH, mvPulleyX, loadY+loadH+mgLen, '#d97706', 3);
+  ctxP.font='bold 13px Segoe UI'; ctxP.fillStyle='#d97706'; ctxP.textAlign='left';
+  ctxP.fillText(`mg = ${mg.toFixed(1)} ${s.unit_N}`, mvPulleyX+8, loadY+loadH+mgLen/2+5);
+
+  // F arrow on hand (pulling down)
+  const fLen = Math.min(50, 22 + F*0.4);
+  arrowP(handX, handY+12, handX, handY+12+fLen, '#2563eb', 3);
+  ctxP.fillStyle = '#2563eb'; ctxP.textAlign='left';
+  ctxP.fillText(`F = ${F.toFixed(1)} ${s.unit_N}`, handX+14, handY+12+fLen/2+5);
+
+  // Pulley labels
+  ctxP.font='11px Segoe UI'; ctxP.fillStyle='#64748b'; ctxP.textAlign='right';
+  ctxP.fillText(p.labelPulley, mvPulleyX-mvPulleyR-6, mvPulleyY+4);
+  ctxP.textAlign='left';
+  ctxP.fillText(p.labelFixed, fixedX+fixedPulleyR+6, fixedY+4);
+}
+
+function arrowP(x1,y1,x2,y2,col,lw=2.5){
+  const a=Math.atan2(y2-y1,x2-x1),hl=10;
+  ctxP.save();ctxP.strokeStyle=col;ctxP.fillStyle=col;ctxP.lineWidth=lw;
+  ctxP.beginPath();ctxP.moveTo(x1,y1);ctxP.lineTo(x2,y2);ctxP.stroke();
+  ctxP.beginPath();ctxP.moveTo(x2,y2);
+  ctxP.lineTo(x2-hl*Math.cos(a-.38),y2-hl*Math.sin(a-.38));
+  ctxP.lineTo(x2-hl*Math.cos(a+.38),y2-hl*Math.sin(a+.38));
+  ctxP.closePath();ctxP.fill();ctxP.restore();
+}
+
+function updatePulleyStaticText(){
+  const s = S(), p = s.pulley;
+  document.getElementById('pageH1P').innerHTML = p.h1;
+  document.getElementById('lMp').textContent   = p.lM;
+  document.getElementById('hintP').textContent = p.hint;
+  document.getElementById('tabBtnBeam').textContent   = s.tabBeam;
+  document.getElementById('tabBtnPulley').textContent = s.tabPulley;
+
+  const m = parseFloat(document.getElementById('sMp').value);
+  document.getElementById('vMp').textContent = p.valM(m);
+
+  document.getElementById('legendP').innerHTML = p.legend.map(([col, sym, desc]) =>
+    `<div class="li"><div class="ld" style="background:${col}"></div>
+     <b style="color:${col}">${sym}</b>${desc}</div>`
+  ).join('');
+}
+
+function drawPulleySolution(){
+  const m  = parseFloat(document.getElementById('sMp').value);
+  const mg = m * G;
+  const T  = mg / 2;
+  const F  = T;
+  const s  = S(), p = s.pulley;
+  const u = s.unit_N, uk = s.unit_kg, um = s.unit_ms2;
+
+  document.getElementById('solP').innerHTML = `
+    <div class="formulas" style="margin-bottom:10px;">
+      <div class="ftitle">${p.titFormulas}</div>
+      <div class="frow"><span class="sym"><span class="hMG">mg</span></span><span class="expr">${p.fGrav}</span><span class="numval hMG">m · g</span></div>
+      <div class="frow"><span class="sym">Σ↑=Σ↓</span><span class="expr">${p.fEquil}</span><span class="numval">2<span class="hT">T</span> = <span class="hMG">mg</span></span></div>
+      <div class="frow"><span class="sym"><span class="hT">T</span></span><span class="expr">${p.fT}</span><span class="numval"><span class="hT">T</span> = <span class="hMG">mg</span> / 2</span></div>
+      <div class="frow"><span class="sym"><span class="hF">F</span></span><span class="expr">${p.fF}</span><span class="numval"><span class="hF">F</span> = <span class="hT">T</span> = <span class="hMG">mg</span> / 2</span></div>
+    </div>
+
+    <div class="formulas">
+      <div class="ftitle">${p.titValues}</div>
+      <div class="frow"><span class="sym">m</span><span class="expr">${p.vMass}</span><span class="numval">${m} ${uk}</span></div>
+      <div class="frow"><span class="sym">g</span><span class="expr">${p.vG}</span><span class="numval">9.81 ${um}</span></div>
+      <div class="frow"><span class="sym"><span class="hMG">mg</span></span><span class="expr">${p.vMG}</span><span class="numval hMG">${m} × 9.81 = ${mg.toFixed(2)} ${u}</span></div>
+      <div class="frow"><span class="sym"><span class="hT">T</span></span><span class="expr">${p.vT}</span><span class="numval hT">${mg.toFixed(2)} / 2 = ${T.toFixed(2)} ${u}</span></div>
+      <div class="frow"><span class="sym"><span class="hF">F</span></span><span class="expr">${p.vF}</span><span class="numval hF">${F.toFixed(2)} ${u}</span></div>
+    </div>
+
+    <div style="margin-top:14px;display:flex;flex-direction:column;gap:10px;">
+      <div class="sol-title">${p.titAlgo}</div>
+      <div class="explain-block" style="border-left:3px solid #0ea5e9;background:#f0f9ff;">
+        <div class="explain-q" style="color:#0369a1;">${p.algoGeneral}</div>
+        ${p.algoSteps.map((text, i) =>
+          `<div class="algo-step"><span class="algo-num">${i+1}</span><span>${text}${i===6
+            ? ` <span class="hF">F</span> = ${mg.toFixed(2)} / 2 = <b>${F.toFixed(2)} ${u}</b>`
+            : ''}</span></div>`
+        ).join('')}
+      </div>
+
+      <div class="sol-title">${p.titExplain}</div>
+
+      <div class="explain-block" style="border-left:3px solid #6366f1;">
+        <div class="explain-q">${p.eqTitle}</div>${p.eqBody}
+      </div>
+
+      <div class="explain-block" style="border-left:3px solid #16a34a;">
+        <div class="explain-q">${p.ropeQ}</div>${p.ropeA}
+      </div>
+
+      <div class="explain-block" style="border-left:3px solid #2563eb;">
+        <div class="explain-q">${p.fEqTQ}</div>${p.fEqTA}
+      </div>
+
+      <div class="explain-block" style="border-left:3px solid #d97706;">
+        <div class="explain-q">${p.idealQ}</div>${p.idealA}
+      </div>
+
+      <div class="explain-block" style="border-left:3px solid #db2477;">
+        <div class="explain-q">${p.tradeQ}</div>${p.tradeA}
+      </div>
+
+      <div class="answer">
+        ${p.answerLabel} <span class="hF">F</span> = <span class="hMG">mg</span> / 2
+        = ${mg.toFixed(2)} / 2 = <b>${F.toFixed(2)} ${u}</b>
+      </div>
+    </div>
+  `;
+}
+
+function drawP(){ drawPulley(); drawPulleySolution(); updatePulleyStaticText(); }
+
+document.getElementById('sMp').oninput = () => {
+  document.getElementById('vMp').textContent = S().pulley.valM(document.getElementById('sMp').value);
+  drawP();
+};
+
+function switchTab(name){
+  document.getElementById('tab-beam').classList.toggle('active', name === 'beam');
+  document.getElementById('tab-pulley').classList.toggle('active', name === 'pulley');
+  document.getElementById('tabBtnBeam').classList.toggle('active', name === 'beam');
+  document.getElementById('tabBtnPulley').classList.toggle('active', name === 'pulley');
+  if (name === 'pulley') { resizeP(); drawP(); }
+  else { resize(); }
+}
+
+// Re-run pulley static text on language toggle
+const _origToggleLang = toggleLang;
+toggleLang = function(){
+  _origToggleLang();
+  updatePulleyStaticText();
+  drawP();
+};
+
 function resize(){
   const W=Math.min(680,window.innerWidth-32);
   cv.width=W;cv.height=Math.round(W*0.58);draw();
 }
-window.addEventListener('resize',resize);
+function resizeP(){
+  const W=Math.min(680,window.innerWidth-32);
+  cvP.width=W;cvP.height=Math.round(W*0.62);
+}
+window.addEventListener('resize',()=>{resize();resizeP();drawP();});
 updateStaticText();
+updatePulleyStaticText();
 resize();
+resizeP();
 syncFmax();
 setEquilibrium();
+drawP();
 </script>
 </body>
 </html>

@@ -195,8 +195,15 @@
         <input id="sMp" type="range" min="1" max="100" value="20" step="1">
         <div class="val" id="vMp"></div>
       </div>
+      <div class="ctrl">
+        <label id="lPull"></label>
+        <input id="sPull" type="range" min="0" max="100" value="0" step="1" style="accent-color:#2563eb;">
+        <div class="val" id="vPull"></div>
+      </div>
     </div>
-    <div style="margin-top:8px;font-size:0.78rem;color:#999;text-align:center;" id="hintP"></div>
+    <!-- ratio readout -->
+    <div id="pullRatio" style="margin-top:10px;display:flex;gap:10px;align-items:center;flex-wrap:wrap;font-size:0.88rem;"></div>
+    <div style="margin-top:6px;font-size:0.78rem;color:#999;text-align:center;" id="hintP"></div>
   </div>
 
   <div class="card" id="solP"></div>
@@ -457,6 +464,13 @@ const STRINGS = {
       labelHand:   'Рука',
       labelCeil:   'Потолок',
       answerLabel: 'Ответ:',
+      lPull: '✋ Тяни верёвку',
+      valPull: v => v == 0 ? 'исходное положение' : `${v}%`,
+      hint: 'Масса — меняет силу F. Слайдер «Тяни» — двигает систему.',
+      ratioHand: d => `✋ Рука опустилась: <b>${d.toFixed(0)} см</b>`,
+      ratioLoad: d => `📦 Груз поднялся: <b>${(d/2).toFixed(0)} см</b>`,
+      ratioMark: '→ в 2 раза меньше',
+      ropeUsed: d => `Верёвка вытянута: ${d.toFixed(0)} см`,
     },
 
     tabLever: 'Рычаг с грузом',
@@ -764,6 +778,13 @@ const STRINGS = {
       labelHand:   'Hand',
       labelCeil:   'Ceiling',
       answerLabel: 'Answer:',
+      lPull: '✋ Pull the rope',
+      valPull: v => v == 0 ? 'start position' : `${v}%`,
+      hint: 'Mass changes force F. The "Pull" slider moves the system.',
+      ratioHand: d => `✋ Hand descended: <b>${d.toFixed(0)} cm</b>`,
+      ratioLoad: d => `📦 Load rose: <b>${(d/2).toFixed(0)} cm</b>`,
+      ratioMark: '→ 2× less',
+      ropeUsed: d => `Rope pulled: ${d.toFixed(0)} cm`,
     },
 
     tabLever: 'Lever with load',
@@ -1334,133 +1355,208 @@ const ctxP = cvP.getContext('2d');
 
 function drawPulley(){
   const W = cvP.width, H = cvP.height;
-  const m  = parseFloat(document.getElementById('sMp').value);
-  const mg = m * G;
-  const T  = mg / 2;
-  const F  = T;
-  const s  = S();
-  const p  = s.pulley;
+  const m       = parseFloat(document.getElementById('sMp').value);
+  const pullPct = parseFloat(document.getElementById('sPull').value); // 0..100
+  const mg = m * G, T = mg / 2, F = T;
+  const s = S(), p = s.pulley;
 
   ctxP.clearRect(0,0,W,H);
 
-  // Ceiling
+  // ── Ceiling ──
   const ceilY = 30;
-  ctxP.fillStyle = '#94a3b8';
-  ctxP.fillRect(0, 0, W, ceilY);
-  ctxP.strokeStyle = '#475569'; ctxP.lineWidth = 2;
-  ctxP.beginPath(); ctxP.moveTo(0, ceilY); ctxP.lineTo(W, ceilY); ctxP.stroke();
-  // hatching
-  ctxP.strokeStyle = '#cbd5e1'; ctxP.lineWidth = 1;
-  for(let x=6; x<W; x+=12){
-    ctxP.beginPath(); ctxP.moveTo(x, 0); ctxP.lineTo(x-8, ceilY-2); ctxP.stroke();
-  }
-  ctxP.font = '11px Segoe UI'; ctxP.fillStyle = '#475569'; ctxP.textAlign = 'left';
+  ctxP.fillStyle = '#94a3b8'; ctxP.fillRect(0,0,W,ceilY);
+  ctxP.strokeStyle='#475569'; ctxP.lineWidth=2;
+  ctxP.beginPath(); ctxP.moveTo(0,ceilY); ctxP.lineTo(W,ceilY); ctxP.stroke();
+  ctxP.strokeStyle='#cbd5e1'; ctxP.lineWidth=1;
+  for(let x=6;x<W;x+=12){ ctxP.beginPath(); ctxP.moveTo(x,0); ctxP.lineTo(x-8,ceilY-2); ctxP.stroke(); }
+  ctxP.font='11px Segoe UI'; ctxP.fillStyle='#475569'; ctxP.textAlign='left';
   ctxP.fillText(p.labelCeil, 8, 16);
 
-  // Geometry: fixed anchor point on ceiling (left), fixed pulley on ceiling (right),
-  // movable pulley hanging below, load hanging from movable pulley, rope from fixed pulley going down to hand.
-  const anchorX = W*0.28, anchorY = ceilY;
-  const fixedX  = W*0.62, fixedY  = ceilY + 18;
-  const mvPulleyX = (anchorX + fixedX)/2, mvPulleyY = H*0.55;
+  // ── Fixed geometry ──
   const mvPulleyR = 22, fixedPulleyR = 14;
-  const handX = fixedX + 70, handY = H*0.78;
+  const anchorX = W*0.27, anchorY = ceilY;
+  const fixedX  = W*0.60, fixedY  = ceilY + 18;
+  const mvPulleyX = (anchorX + fixedX)/2;
+  const handX = fixedX + 72;
 
-  // Load (box) hanging from movable pulley
-  const loadW = 70 + Math.min(40, m*0.8), loadH = 40 + Math.min(30, m*0.6);
-  const loadX = mvPulleyX - loadW/2, loadY = mvPulleyY + mvPulleyR + 8;
+  // Maximum travel in px (so load never reaches ceiling)
+  const maxTravelPx = H * 0.33;
+  const pullPx   = (pullPct/100) * maxTravelPx;  // hand descends this much
+  const loadRise = pullPx / 2;                    // load rises half as much
 
-  // Small vertical rod from pulley to load
-  ctxP.strokeStyle = '#64748b'; ctxP.lineWidth = 2;
-  ctxP.beginPath(); ctxP.moveTo(mvPulleyX, mvPulleyY+mvPulleyR);
-  ctxP.lineTo(mvPulleyX, loadY); ctxP.stroke();
+  // Base (pull=0) positions
+  const mvPulleyY_base = H * 0.60;
+  const handY_base     = ceilY + fixedPulleyR*2 + 36; // just below fixed pulley
 
-  // Load box
-  const grd = ctxP.createLinearGradient(loadX, loadY, loadX, loadY+loadH);
-  grd.addColorStop(0, '#fde68a'); grd.addColorStop(1, '#f59e0b');
-  ctxP.fillStyle = grd;
-  ctxP.fillRect(loadX, loadY, loadW, loadH);
-  ctxP.strokeStyle = '#b45309'; ctxP.lineWidth = 1.5;
-  ctxP.strokeRect(loadX, loadY, loadW, loadH);
-  ctxP.font = 'bold 13px Segoe UI'; ctxP.fillStyle = '#78350f'; ctxP.textAlign = 'center';
-  ctxP.fillText(`m = ${m} кг`.replace('кг', s.unit_kg), mvPulleyX, loadY + loadH/2 + 5);
+  // Current positions
+  const mvPulleyY = mvPulleyY_base - loadRise;
+  const handY     = handY_base + pullPx;
 
-  // Rope: anchor (ceiling) → movable pulley (left side) → over top → movable pulley (right side) → up to fixed pulley (left side) → over → down to hand
-  // Left branch: anchor to pulley left
-  const pLeftX = mvPulleyX - mvPulleyR, pLeftY = mvPulleyY;
+  const loadW = 64 + Math.min(36, m*0.7), loadH = 36 + Math.min(26, m*0.5);
+  const loadY = mvPulleyY + mvPulleyR + 6;
+
+  // ── Reference ghost (dotted) showing start position when pulled ──
+  if(pullPct > 2){
+    ctxP.save(); ctxP.setLineDash([4,4]); ctxP.strokeStyle='#cbd5e1'; ctxP.lineWidth=1.5;
+    // ghost movable pulley ring
+    ctxP.beginPath(); ctxP.arc(mvPulleyX, mvPulleyY_base, mvPulleyR, 0, 2*Math.PI); ctxP.stroke();
+    // ghost load box
+    ctxP.strokeRect(mvPulleyX-loadW/2, mvPulleyY_base+mvPulleyR+6, loadW, loadH);
+    // ghost hand
+    ctxP.beginPath(); ctxP.arc(handX, handY_base, 12, 0, 2*Math.PI); ctxP.stroke();
+    ctxP.restore();
+  }
+
+  // ── Rope paths ──
+  const pLeftX  = mvPulleyX - mvPulleyR, pLeftY  = mvPulleyY;
   const pRightX = mvPulleyX + mvPulleyR, pRightY = mvPulleyY;
-  ctxP.strokeStyle = '#334155'; ctxP.lineWidth = 2.2;
-  ctxP.beginPath(); ctxP.moveTo(anchorX, anchorY); ctxP.lineTo(pLeftX, pLeftY); ctxP.stroke();
-  // arc around movable pulley bottom
-  ctxP.beginPath(); ctxP.arc(mvPulleyX, mvPulleyY, mvPulleyR, Math.PI, 2*Math.PI, true); ctxP.stroke();
-  // Right branch: pulley right → up to fixed pulley left side
-  const fLeftX = fixedX - fixedPulleyR, fLeftY = fixedY;
-  ctxP.beginPath(); ctxP.moveTo(pRightX, pRightY); ctxP.lineTo(fLeftX, fLeftY); ctxP.stroke();
-  // arc around fixed pulley top
-  ctxP.beginPath(); ctxP.arc(fixedX, fixedY, fixedPulleyR, Math.PI, 0, true); ctxP.stroke();
-  // down to hand
+  const fLeftX  = fixedX - fixedPulleyR, fLeftY  = fixedY;
   const fRightX = fixedX + fixedPulleyR;
-  ctxP.beginPath(); ctxP.moveTo(fRightX, fixedY); ctxP.lineTo(handX, handY); ctxP.stroke();
 
-  // Movable pulley (circle)
-  const pgrd = ctxP.createRadialGradient(mvPulleyX-5, mvPulleyY-5, 3, mvPulleyX, mvPulleyY, mvPulleyR);
-  pgrd.addColorStop(0, '#e2e8f0'); pgrd.addColorStop(1, '#64748b');
-  ctxP.fillStyle = pgrd;
-  ctxP.beginPath(); ctxP.arc(mvPulleyX, mvPulleyY, mvPulleyR, 0, 2*Math.PI); ctxP.fill();
-  ctxP.strokeStyle = '#334155'; ctxP.lineWidth = 1.5; ctxP.stroke();
-  ctxP.fillStyle = '#334155';
-  ctxP.beginPath(); ctxP.arc(mvPulleyX, mvPulleyY, 3, 0, 2*Math.PI); ctxP.fill();
+  // helper: draw thick rope segment
+  const rope = (x1,y1,x2,y2,col='#334155',lw=2.5) => {
+    ctxP.save(); ctxP.strokeStyle=col; ctxP.lineWidth=lw;
+    ctxP.beginPath(); ctxP.moveTo(x1,y1); ctxP.lineTo(x2,y2); ctxP.stroke(); ctxP.restore();
+  };
 
-  // Fixed pulley
-  ctxP.fillStyle = '#cbd5e1';
-  ctxP.beginPath(); ctxP.arc(fixedX, fixedY, fixedPulleyR, 0, 2*Math.PI); ctxP.fill();
-  ctxP.strokeStyle = '#475569'; ctxP.lineWidth = 1.5; ctxP.stroke();
-  ctxP.fillStyle = '#475569';
-  ctxP.beginPath(); ctxP.arc(fixedX, fixedY, 2.5, 0, 2*Math.PI); ctxP.fill();
-  // bracket to ceiling
-  ctxP.strokeStyle = '#475569'; ctxP.lineWidth = 2;
-  ctxP.beginPath(); ctxP.moveTo(fixedX, ceilY); ctxP.lineTo(fixedX, fixedY-fixedPulleyR); ctxP.stroke();
+  // Left branch: anchor → movable pulley left (grey, stays taut but shortens)
+  rope(anchorX, anchorY, pLeftX, pLeftY, '#475569', 2.5);
+  // Under movable pulley arc
+  ctxP.strokeStyle='#475569'; ctxP.lineWidth=2.5;
+  ctxP.beginPath(); ctxP.arc(mvPulleyX, mvPulleyY, mvPulleyR, Math.PI, 2*Math.PI, true); ctxP.stroke();
+  // Right branch: movable pulley right → fixed pulley left (grey)
+  rope(pRightX, pRightY, fLeftX, fLeftY, '#475569', 2.5);
+  // Over fixed pulley arc
+  ctxP.strokeStyle='#475569'; ctxP.lineWidth=2.5;
+  ctxP.beginPath(); ctxP.arc(fixedX, fixedY, fixedPulleyR, Math.PI, 0, true); ctxP.stroke();
 
-  // Anchor triangle
-  ctxP.fillStyle = '#475569';
-  ctxP.beginPath();
-  ctxP.moveTo(anchorX, anchorY);
-  ctxP.lineTo(anchorX-6, anchorY+10);
-  ctxP.lineTo(anchorX+6, anchorY+10);
+  // Hand rope: TWO colours — original (grey) + pulled portion (blue)
+  // "original" rope length from fRightX down to handY_base
+  rope(fRightX, fixedY, fRightX, handY_base, '#64748b', 2.5);
+  // "pulled" extra portion (blue) from handY_base down to handY
+  if(pullPct > 0.5){
+    rope(fRightX, handY_base, handX, handY, '#2563eb', 3);
+    // small tick marks every 20% of pullPx on the pulled section
+    ctxP.save(); ctxP.strokeStyle='#93c5fd'; ctxP.lineWidth=1.5;
+    for(let i=1; i<=4; i++){
+      const ty = handY_base + (pullPx * i/5);
+      ctxP.beginPath(); ctxP.moveTo(fRightX-5, ty); ctxP.lineTo(fRightX+5, ty); ctxP.stroke();
+    }
+    ctxP.restore();
+  }
+
+  // ── Vertical travel arrows on sides ──
+  // Left side: load rise (green up arrow)
+  if(loadRise > 6){
+    const ax = mvPulleyX - loadW/2 - 22;
+    arrowP(ax, mvPulleyY_base+mvPulleyR, ax, mvPulleyY+mvPulleyR, '#16a34a', 2);
+    ctxP.save(); ctxP.fillStyle='#166534'; ctxP.font='bold 11px Segoe UI'; ctxP.textAlign='center';
+    ctxP.fillText(`+${loadRise.toFixed(0)}`, ax, mvPulleyY+mvPulleyR - loadRise/2 - 4);
+    ctxP.restore();
+  }
+  // Right side: hand pull (blue down arrow)
+  if(pullPx > 6){
+    const ax = handX + 22;
+    arrowP(ax, handY_base, ax, handY, '#2563eb', 2);
+    ctxP.save(); ctxP.fillStyle='#1e3a8a'; ctxP.font='bold 11px Segoe UI'; ctxP.textAlign='center';
+    ctxP.fillText(`+${pullPx.toFixed(0)}`, ax, handY_base + pullPx/2 + 4);
+    ctxP.restore();
+  }
+
+  // ── Movable pulley ──
+  const pgrd = ctxP.createRadialGradient(mvPulleyX-5,mvPulleyY-5,3,mvPulleyX,mvPulleyY,mvPulleyR);
+  pgrd.addColorStop(0,'#e2e8f0'); pgrd.addColorStop(1,'#64748b');
+  ctxP.fillStyle=pgrd;
+  ctxP.beginPath(); ctxP.arc(mvPulleyX,mvPulleyY,mvPulleyR,0,2*Math.PI); ctxP.fill();
+  ctxP.strokeStyle='#334155'; ctxP.lineWidth=1.5; ctxP.stroke();
+  ctxP.fillStyle='#334155';
+  ctxP.beginPath(); ctxP.arc(mvPulleyX,mvPulleyY,3,0,2*Math.PI); ctxP.fill();
+
+  // ── Fixed pulley ──
+  ctxP.fillStyle='#cbd5e1';
+  ctxP.beginPath(); ctxP.arc(fixedX,fixedY,fixedPulleyR,0,2*Math.PI); ctxP.fill();
+  ctxP.strokeStyle='#475569'; ctxP.lineWidth=1.5; ctxP.stroke();
+  ctxP.fillStyle='#475569';
+  ctxP.beginPath(); ctxP.arc(fixedX,fixedY,2.5,0,2*Math.PI); ctxP.fill();
+  ctxP.strokeStyle='#475569'; ctxP.lineWidth=2;
+  ctxP.beginPath(); ctxP.moveTo(fixedX,ceilY); ctxP.lineTo(fixedX,fixedY-fixedPulleyR); ctxP.stroke();
+
+  // ── Anchor ──
+  ctxP.fillStyle='#475569';
+  ctxP.beginPath(); ctxP.moveTo(anchorX,anchorY);
+  ctxP.lineTo(anchorX-7,anchorY+12); ctxP.lineTo(anchorX+7,anchorY+12);
   ctxP.closePath(); ctxP.fill();
 
-  // Hand (circle)
-  ctxP.fillStyle = '#fca5a5';
-  ctxP.beginPath(); ctxP.arc(handX, handY, 12, 0, 2*Math.PI); ctxP.fill();
-  ctxP.strokeStyle = '#b91c1c'; ctxP.lineWidth = 1.5; ctxP.stroke();
-  ctxP.font = '11px Segoe UI'; ctxP.fillStyle = '#334155'; ctxP.textAlign = 'center';
-  ctxP.fillText(p.labelHand, handX, handY+26);
+  // ── Rod from pulley to load ──
+  ctxP.strokeStyle='#64748b'; ctxP.lineWidth=2;
+  ctxP.beginPath(); ctxP.moveTo(mvPulleyX,mvPulleyY+mvPulleyR); ctxP.lineTo(mvPulleyX,loadY); ctxP.stroke();
 
-  // Tension labels (T on each branch)
-  ctxP.font = 'bold 13px Segoe UI'; ctxP.fillStyle = '#16a34a';
-  ctxP.fillText(`T = ${T.toFixed(1)} ${s.unit_N}`, (anchorX+pLeftX)/2 - 22, (anchorY+pLeftY)/2);
-  ctxP.fillText(`T = ${T.toFixed(1)} ${s.unit_N}`, (pRightX+fLeftX)/2 + 22, (pRightY+fLeftY)/2);
+  // ── Load box ──
+  const grd=ctxP.createLinearGradient(0,loadY,0,loadY+loadH);
+  grd.addColorStop(0,'#fde68a'); grd.addColorStop(1,'#f59e0b');
+  ctxP.fillStyle=grd;
+  ctxP.fillRect(mvPulleyX-loadW/2,loadY,loadW,loadH);
+  ctxP.strokeStyle='#b45309'; ctxP.lineWidth=1.5;
+  ctxP.strokeRect(mvPulleyX-loadW/2,loadY,loadW,loadH);
+  ctxP.font='bold 13px Segoe UI'; ctxP.fillStyle='#78350f'; ctxP.textAlign='center';
+  ctxP.fillText(`m = ${m} ${s.unit_kg}`, mvPulleyX, loadY+loadH/2+5);
 
-  // Upward tension arrows on movable pulley
-  arrowP(pLeftX, pLeftY, pLeftX, pLeftY-38, '#16a34a', 2.5);
-  arrowP(pRightX, pRightY, pRightX, pRightY-38, '#16a34a', 2.5);
+  // ── Hand ──
+  ctxP.fillStyle='#fca5a5';
+  ctxP.beginPath(); ctxP.arc(handX,handY,13,0,2*Math.PI); ctxP.fill();
+  ctxP.strokeStyle='#b91c1c'; ctxP.lineWidth=1.5; ctxP.stroke();
+  ctxP.font='11px Segoe UI'; ctxP.fillStyle='#334155'; ctxP.textAlign='center';
+  ctxP.fillText(p.labelHand, handX, handY+28);
 
-  // mg arrow down from load
-  const mgLen = Math.min(70, 28 + m*0.6);
+  // ── Force arrows & labels ──
+  const mgLen = Math.min(60, 26+m*0.5);
   arrowP(mvPulleyX, loadY+loadH, mvPulleyX, loadY+loadH+mgLen, '#d97706', 3);
-  ctxP.font='bold 13px Segoe UI'; ctxP.fillStyle='#d97706'; ctxP.textAlign='left';
-  ctxP.fillText(`mg = ${mg.toFixed(1)} ${s.unit_N}`, mvPulleyX+8, loadY+loadH+mgLen/2+5);
+  ctxP.font='bold 12px Segoe UI'; ctxP.fillStyle='#d97706'; ctxP.textAlign='left';
+  ctxP.fillText(`mg=${mg.toFixed(1)} ${s.unit_N}`, mvPulleyX+6, loadY+loadH+mgLen/2+5);
 
-  // F arrow on hand (pulling down)
-  const fLen = Math.min(50, 22 + F*0.4);
-  arrowP(handX, handY+12, handX, handY+12+fLen, '#2563eb', 3);
-  ctxP.fillStyle = '#2563eb'; ctxP.textAlign='left';
-  ctxP.fillText(`F = ${F.toFixed(1)} ${s.unit_N}`, handX+14, handY+12+fLen/2+5);
+  const fLen = Math.min(44, 20+F*0.35);
+  arrowP(handX, handY+14, handX, handY+14+fLen, '#2563eb', 3);
+  ctxP.fillStyle='#2563eb'; ctxP.textAlign='left';
+  ctxP.fillText(`F=${F.toFixed(1)} ${s.unit_N}`, handX+14, handY+14+fLen/2+5);
 
-  // Pulley labels
+  // T labels & up-arrows on both branches
+  arrowP(pLeftX,pLeftY,pLeftX,pLeftY-34,'#16a34a',2.5);
+  arrowP(pRightX,pRightY,pRightX,pRightY-34,'#16a34a',2.5);
+  ctxP.font='bold 11px Segoe UI'; ctxP.fillStyle='#16a34a'; ctxP.textAlign='right';
+  ctxP.fillText(`T=${T.toFixed(1)}`, pLeftX-4, (anchorY+pLeftY)/2);
+  ctxP.textAlign='left';
+  ctxP.fillText(`T=${T.toFixed(1)}`, pRightX+4, (pRightY+fLeftY)/2);
+
+  // ── Pulley labels ──
   ctxP.font='11px Segoe UI'; ctxP.fillStyle='#64748b'; ctxP.textAlign='right';
   ctxP.fillText(p.labelPulley, mvPulleyX-mvPulleyR-6, mvPulleyY+4);
   ctxP.textAlign='left';
   ctxP.fillText(p.labelFixed, fixedX+fixedPulleyR+6, fixedY+4);
+
+  // ── Ratio readout panel (below canvas, in HTML) ──
+  const cmScale = 80; // px per "cm" for display
+  const handCm = (pullPx / cvP.width * 100).toFixed(1);
+  const loadCm = (loadRise / cvP.width * 100).toFixed(1);
+  const ratioEl = document.getElementById('pullRatio');
+  if(ratioEl){
+    if(pullPct < 1){
+      ratioEl.innerHTML = `<span style="color:#94a3b8;font-size:0.83rem;">${curLang==='ru'?'Потяни слайдер вниз — увидишь движение':'Move the slider — watch the motion'}</span>`;
+    } else {
+      ratioEl.innerHTML = `
+        <span style="background:#dbeafe;padding:4px 10px;border-radius:6px;color:#1e3a8a;font-weight:700;">
+          ✋ −${handCm}
+        </span>
+        <span style="color:#64748b;">→</span>
+        <span style="background:#dcfce7;padding:4px 10px;border-radius:6px;color:#166534;font-weight:700;">
+          📦 +${loadCm}
+        </span>
+        <span style="color:#64748b;font-size:0.83rem;">(${curLang==='ru'?'рука : груз = 2 : 1':'hand : load = 2 : 1'})</span>
+        <span style="background:#e0f2fe;padding:3px 8px;border-radius:6px;color:#0369a1;font-size:0.8rem;">
+          ${curLang==='ru'?'верёвка вытянута':'rope pulled'}: ${(pullPx/cvP.width*100*2).toFixed(1)}
+        </span>
+      `;
+    }
+  }
 }
 
 function arrowP(x1,y1,x2,y2,col,lw=2.5){
@@ -1477,12 +1573,15 @@ function updatePulleyStaticText(){
   const s = S(), p = s.pulley;
   document.getElementById('pageH1P').innerHTML = p.h1;
   document.getElementById('lMp').textContent   = p.lM;
+  document.getElementById('lPull').textContent = p.lPull;
   document.getElementById('hintP').textContent = p.hint;
   document.getElementById('tabBtnBeam').textContent   = s.tabBeam;
   document.getElementById('tabBtnPulley').textContent = s.tabPulley;
 
-  const m = parseFloat(document.getElementById('sMp').value);
-  document.getElementById('vMp').textContent = p.valM(m);
+  const m    = parseFloat(document.getElementById('sMp').value);
+  const pull = parseFloat(document.getElementById('sPull').value);
+  document.getElementById('vMp').textContent   = p.valM(m);
+  document.getElementById('vPull').textContent = p.valPull(pull);
 
   document.getElementById('legendP').innerHTML = p.legend.map(([col, sym, desc]) =>
     `<div class="li"><div class="ld" style="background:${col}"></div>
@@ -1561,6 +1660,10 @@ function drawP(){ drawPulley(); drawPulleySolution(); updatePulleyStaticText(); 
 
 document.getElementById('sMp').oninput = () => {
   document.getElementById('vMp').textContent = S().pulley.valM(document.getElementById('sMp').value);
+  drawP();
+};
+document.getElementById('sPull').oninput = () => {
+  document.getElementById('vPull').textContent = S().pulley.valPull(document.getElementById('sPull').value);
   drawP();
 };
 

@@ -130,6 +130,8 @@
 <div class="tabs">
   <button class="tab-btn active" id="tabBtnBeam"   onclick="switchTab('beam')"></button>
   <button class="tab-btn"        id="tabBtnPulley" onclick="switchTab('pulley')"></button>
+  <button class="tab-btn"        id="tabBtnLever"  onclick="switchTab('lever')"></button>
+  <button class="tab-btn"        id="tabBtnRamp"   onclick="switchTab('ramp')"></button>
 </div>
 
 <div class="tab-panel active" id="tab-beam">
@@ -201,6 +203,71 @@
 
   <div class="card">
     <div class="legend" id="legendP"></div>
+  </div>
+</div>
+
+<div class="tab-panel" id="tab-lever">
+  <h1 id="pageH1L"></h1>
+
+  <div class="card" style="padding:14px 14px 10px;">
+    <canvas id="cL"></canvas>
+  </div>
+
+  <div class="card">
+    <div class="controls">
+      <div class="ctrl">
+        <label id="lMl"></label>
+        <input id="sMl" type="range" min="1" max="100" value="20" step="1">
+        <div class="val" id="vMl"></div>
+      </div>
+      <div class="ctrl">
+        <label id="lL1"></label>
+        <input id="sL1" type="range" min="0.05" max="0.45" value="0.15" step="0.01">
+        <div class="val" id="vL1"></div>
+      </div>
+      <div class="ctrl">
+        <label id="lL2"></label>
+        <input id="sL2" type="range" min="0.05" max="0.45" value="0.40" step="0.01">
+        <div class="val" id="vL2"></div>
+      </div>
+    </div>
+    <div style="margin-top:8px;font-size:0.78rem;color:#999;text-align:center;" id="hintL"></div>
+  </div>
+
+  <div class="card" id="solL"></div>
+
+  <div class="card">
+    <div class="legend" id="legendL"></div>
+  </div>
+</div>
+
+<div class="tab-panel" id="tab-ramp">
+  <h1 id="pageH1R"></h1>
+
+  <div class="card" style="padding:14px 14px 10px;">
+    <canvas id="cR"></canvas>
+  </div>
+
+  <div class="card">
+    <div class="controls">
+      <div class="ctrl">
+        <label id="lMr"></label>
+        <input id="sMr" type="range" min="1" max="100" value="20" step="1">
+        <div class="val" id="vMr"></div>
+      </div>
+      <div class="ctrl">
+        <label id="lAng"></label>
+        <input id="sAng" type="range" min="5" max="75" value="30" step="1">
+        <div class="val" id="vAng"></div>
+      </div>
+    </div>
+    <div style="margin-top:8px;font-size:0.78rem;color:#999;text-align:center;" id="hintR"></div>
+  </div>
+
+  <div class="card" id="solR"></div>
+
+  <div class="card">
+    <div class="legend" id="legendR"></div>
   </div>
 </div>
 
@@ -391,6 +458,134 @@ const STRINGS = {
       labelCeil:   'Потолок',
       answerLabel: 'Ответ:',
     },
+
+    tabLever: 'Рычаг с грузом',
+    lever: {
+      h1: 'Рычаг — какая сила <em>F</em> уравновесит груз массой <em>m</em>?',
+      lM: 'Масса груза', lL1: 'Плечо груза L₁', lL2: 'Плечо силы L₂',
+      valM: m => `${m} кг`,
+      valL: v => `${v.toFixed(2)}·L`,
+      hint: 'Двигай плечи — чем длиннее L₂, тем меньше нужна сила',
+      titFormulas: 'Используемые формулы',
+      titValues:   'Используемые величины',
+      titAlgo:     'Как решать задачи на рычаг',
+      titExplain:  'Объяснение по шагам',
+      fGrav:  'сила тяжести груза',
+      fMom:   'момент силы = сила × плечо',
+      fEquil: 'условие равновесия (моменты равны)',
+      fForce: 'искомая сила из равновесия',
+      vMass: 'масса груза', vG: 'ускорение свободного падения',
+      vMG:   'сила тяжести = m × g',
+      vL1:   'плечо груза (ось → груз)',
+      vL2:   'плечо силы (ось → рука)',
+      vF:    'искомая сила',
+      vAdv:  'выигрыш в силе = L₂ / L₁',
+      algoGeneral: 'Общий алгоритм — для любой задачи на рычаг',
+      algoSteps: [
+        `<b>Найди ось вращения.</b> Это точка, вокруг которой рычаг может поворачиваться.`,
+        `<b>Выпиши все силы:</b> вниз — вес груза <span class="hMG">mg</span>,
+         вниз — рука <span class="hF">F</span>, в оси — реакция опоры
+         (у неё плечо ноль, момента нет — исключаем).`,
+        `<b>Найди плечо каждой силы</b> — расстояние от оси до линии действия:
+         <span class="ha">L₁</span> для <span class="hMG">mg</span>,
+         <span class="hb">L₂</span> для <span class="hF">F</span>.`,
+        `<b>Момент = сила × плечо.</b> Определи направление:
+         <span class="hMG">mg</span> поворачивает в одну сторону,
+         <span class="hF">F</span> — в противоположную.`,
+        `<b>Равновесие:</b> моменты равны →
+         <span class="hF">F</span> · <span class="hb">L₂</span> =
+         <span class="hMG">mg</span> · <span class="ha">L₁</span>`,
+        `<b>Выражаем F:</b>
+         <span class="hF">F</span> =
+         <span class="hMG">mg</span> · <span class="ha">L₁</span> / <span class="hb">L₂</span>`,
+        `<b>Подставь числа</b> и получи ответ:`,
+      ],
+      ruleQ: 'Почему длинное плечо даёт выигрыш в силе?',
+      ruleA: `Момент = сила × плечо. Если плечо силы в 2 раза длиннее плеча груза —
+              достаточно в 2 раза меньшей силы, чтобы получить тот же момент.
+              Это и есть «выигрыш в силе».`,
+      pivotQ: 'Почему реакция оси не входит в уравнение?',
+      pivotA: `Реакция приложена прямо в оси вращения. Её плечо равно нулю,
+               поэтому момент = сила × 0 = 0. В уравнение моментов она не попадает.`,
+      tradeQ: 'Выигрыш в силе — «бесплатный»?',
+      tradeA: `Нет. Если сила в k раз меньше, то рука проходит путь в k раз <b>больший</b>,
+               чем поднимается груз. Работа A = F·s сохраняется. Золотое правило механики.`,
+      legend: [
+        ['#d97706', 'mg', '— вес груза (вниз)'],
+        ['#2563eb', 'F',  '— сила руки (вниз)'],
+        ['#16a34a', 'N',  '— реакция оси (вверх, не создаёт момент)'],
+        ['#7c3aed', 'L₁', '— плечо груза'],
+        ['#db2477', 'L₂', '— плечо силы'],
+      ],
+      answerLabel: 'Ответ:',
+    },
+
+    tabRamp: 'Пандус с грузом',
+    ramp: {
+      h1: 'Наклонная плоскость — какая сила <em>F</em> удержит груз массой <em>m</em> на склоне?',
+      lM: 'Масса груза', lAng: 'Угол наклона α',
+      valM: m => `${m} кг`,
+      valAng: a => `${a}°`,
+      hint: 'Двигай угол — чем круче склон, тем больше нужна сила',
+      titFormulas: 'Используемые формулы',
+      titValues:   'Используемые величины',
+      titAlgo:     'Как решать задачи на наклонную плоскость',
+      titExplain:  'Объяснение по шагам',
+      fGrav:  'сила тяжести',
+      fSplit: 'разложение mg на компоненты вдоль и поперёк склона',
+      fEquilTan:  'равновесие вдоль склона: F удерживает от скатывания',
+      fEquilNorm: 'равновесие поперёк склона: N = mg·cos α',
+      vMass: 'масса груза', vG: 'ускорение свободного падения',
+      vMG:   'сила тяжести = m × g',
+      vAng:  'угол наклона',
+      vFpar: 'составляющая mg вдоль склона (скатывающая)',
+      vFnorm:'составляющая mg поперёк склона (прижимающая)',
+      vF:    'сила, удерживающая груз (вдоль склона вверх)',
+      vN:    'реакция опоры (перпендикулярно склону)',
+      algoGeneral: 'Общий алгоритм — для задач на наклонной плоскости',
+      algoSteps: [
+        `<b>Выдели тело.</b> Груз на склоне — свободное тело.`,
+        `<b>Выпиши силы:</b> <span class="hMG">mg</span> вниз (вертикально),
+         <span class="hN">N</span> перпендикулярно склону (от поверхности),
+         <span class="hF">F</span> вдоль склона вверх (удерживает от скатывания).`,
+        `<b>Повернём оси координат</b> так, чтобы одна ось шла вдоль склона, другая — поперёк.
+         Это упрощает разложение mg.`,
+        `<b>Разложим mg на две компоненты:</b>
+         вдоль склона (скатывающая) = <span class="hMG">mg</span>·sin α,
+         поперёк склона (прижимающая) = <span class="hMG">mg</span>·cos α.`,
+        `<b>Равновесие вдоль склона:</b>
+         <span class="hF">F</span> = <span class="hMG">mg</span>·sin α
+         (F удерживает от скатывания).`,
+        `<b>Равновесие поперёк склона:</b>
+         <span class="hN">N</span> = <span class="hMG">mg</span>·cos α
+         (опора отталкивает с той же силой, что прижимает груз).`,
+        `<b>Подставь числа</b> и получи ответ:`,
+      ],
+      sinQ: 'Почему именно sin α, а не cos α?',
+      sinA: `Разложи mg на параллелограмм сил: одна сторона вдоль склона, другая — перпендикулярно.
+             Вдоль склона — <b>короткая</b> сторона = mg·sin α. Если α = 0° (пол) —
+             sin = 0, сила не нужна. Если α = 90° (стена) — sin = 1, держишь весь mg.`,
+      zeroQ: 'Что будет при α = 0° и α = 90°?',
+      zeroA: `При α = 0° (горизонтальный пол): F = mg·sin 0° = 0 — груз лежит сам.<br>
+              При α = 90° (вертикальная стена): F = mg·sin 90° = mg — удерживаешь весь вес.<br>
+              Промежуточные углы — промежуточные силы.`,
+      frictQ: 'А трение?',
+      frictA: `Мы считаем склон идеально гладким. В реальности сила трения может
+               частично удерживать груз, и приложенная F будет меньше.
+               Формула F = mg·sin α — минимум для гладкого случая.`,
+      tradeQ: 'Выигрыш при пологом склоне — «бесплатный»?',
+      tradeA: `Нет. Чтобы поднять груз на высоту h по пологому склону,
+               толкать надо на <b>большее расстояние</b> s = h/sin α. Работа
+               A = F·s = mg·sin α · h/sin α = mg·h — та же самая. Золотое правило механики.`,
+      legend: [
+        ['#d97706', 'mg',       '— сила тяжести (вертикально вниз)'],
+        ['#f59e0b', 'mg·sin α', '— скатывающая составляющая'],
+        ['#fbbf24', 'mg·cos α', '— прижимающая составляющая'],
+        ['#16a34a', 'N',        '— реакция опоры (перпендикулярно склону)'],
+        ['#2563eb', 'F',        '— удерживающая сила (вдоль склона вверх)'],
+      ],
+      answerLabel: 'Ответ:',
+    },
   },
 
   en: {
@@ -568,6 +763,132 @@ const STRINGS = {
       labelFixed:  'Fixed pulley',
       labelHand:   'Hand',
       labelCeil:   'Ceiling',
+      answerLabel: 'Answer:',
+    },
+
+    tabLever: 'Lever with load',
+    lever: {
+      h1: 'Lever — what force <em>F</em> balances a load of mass <em>m</em>?',
+      lM: 'Load mass', lL1: 'Load arm L₁', lL2: 'Force arm L₂',
+      valM: m => `${m} kg`,
+      valL: v => `${v.toFixed(2)}·L`,
+      hint: 'Move the arms — the longer L₂, the smaller the required force',
+      titFormulas: 'Formulas',
+      titValues:   'Values',
+      titAlgo:     'How to solve lever problems',
+      titExplain:  'Step-by-step explanation',
+      fGrav:  'weight of the load',
+      fMom:   'torque = force × arm',
+      fEquil: 'equilibrium condition (torques equal)',
+      fForce: 'required force from equilibrium',
+      vMass: 'load mass', vG: 'gravitational acceleration',
+      vMG:   'weight = m × g',
+      vL1:   'load arm (pivot → load)',
+      vL2:   'force arm (pivot → hand)',
+      vF:    'required force',
+      vAdv:  'mechanical advantage = L₂ / L₁',
+      algoGeneral: 'General algorithm — for any lever problem',
+      algoSteps: [
+        `<b>Find the rotation axis.</b> The point around which the lever can rotate.`,
+        `<b>List all forces:</b> down — weight <span class="hMG">mg</span>,
+         down — hand <span class="hF">F</span>, at the axis — reaction
+         (arm = 0, no torque, eliminate).`,
+        `<b>Find each moment arm</b> — distance from axis to line of action:
+         <span class="ha">L₁</span> for <span class="hMG">mg</span>,
+         <span class="hb">L₂</span> for <span class="hF">F</span>.`,
+        `<b>Torque = force × arm.</b> Directions are opposite:
+         <span class="hMG">mg</span> rotates one way, <span class="hF">F</span> the other.`,
+        `<b>Equilibrium:</b> torques equal →
+         <span class="hF">F</span> · <span class="hb">L₂</span> =
+         <span class="hMG">mg</span> · <span class="ha">L₁</span>`,
+        `<b>Solve for F:</b>
+         <span class="hF">F</span> =
+         <span class="hMG">mg</span> · <span class="ha">L₁</span> / <span class="hb">L₂</span>`,
+        `<b>Substitute numbers</b> and get the answer:`,
+      ],
+      ruleQ: 'Why does a longer arm give a mechanical advantage?',
+      ruleA: `Torque = force × arm. If the force arm is 2× the load arm,
+              you need half the force for the same torque. That is the "mechanical advantage".`,
+      pivotQ: 'Why is the axis reaction absent from the equation?',
+      pivotA: `The reaction is applied right at the axis. Its arm is zero,
+               so torque = force × 0 = 0. It drops out of the torque equation.`,
+      tradeQ: 'Is the advantage "free"?',
+      tradeA: `No. If force is k times smaller, the hand travels <b>k times farther</b>
+               than the load rises. Work A = F·s is preserved. The golden rule of mechanics.`,
+      legend: [
+        ['#d97706', 'mg', '— load weight (down)'],
+        ['#2563eb', 'F',  '— hand force (down)'],
+        ['#16a34a', 'N',  '— axis reaction (up, no torque)'],
+        ['#7c3aed', 'L₁', '— load arm'],
+        ['#db2477', 'L₂', '— force arm'],
+      ],
+      answerLabel: 'Answer:',
+    },
+
+    tabRamp: 'Ramp with load',
+    ramp: {
+      h1: 'Inclined plane — what force <em>F</em> holds a load of mass <em>m</em> on the slope?',
+      lM: 'Load mass', lAng: 'Slope angle α',
+      valM: m => `${m} kg`,
+      valAng: a => `${a}°`,
+      hint: 'Move the angle — the steeper the slope, the larger the required force',
+      titFormulas: 'Formulas',
+      titValues:   'Values',
+      titAlgo:     'How to solve inclined plane problems',
+      titExplain:  'Step-by-step explanation',
+      fGrav:  'gravitational force',
+      fSplit: 'decomposition of mg along and across the slope',
+      fEquilTan:  'equilibrium along the slope: F prevents sliding',
+      fEquilNorm: 'equilibrium across the slope: N = mg·cos α',
+      vMass: 'load mass', vG: 'gravitational acceleration',
+      vMG:   'weight = m × g',
+      vAng:  'slope angle',
+      vFpar: 'mg component along the slope (sliding)',
+      vFnorm:'mg component across the slope (pressing)',
+      vF:    'force that holds the load (along the slope, up)',
+      vN:    'support reaction (perpendicular to slope)',
+      algoGeneral: 'General algorithm — for inclined plane problems',
+      algoSteps: [
+        `<b>Pick the body.</b> The load on the slope is the free body.`,
+        `<b>List forces:</b> <span class="hMG">mg</span> downward (vertical),
+         <span class="hN">N</span> perpendicular to the slope (from the surface),
+         <span class="hF">F</span> along the slope upward (prevents sliding).`,
+        `<b>Rotate the axes</b> so one goes along the slope, the other across.
+         This simplifies decomposing mg.`,
+        `<b>Decompose mg into two components:</b>
+         along slope (sliding) = <span class="hMG">mg</span>·sin α,
+         across slope (pressing) = <span class="hMG">mg</span>·cos α.`,
+        `<b>Equilibrium along the slope:</b>
+         <span class="hF">F</span> = <span class="hMG">mg</span>·sin α
+         (F prevents sliding).`,
+        `<b>Equilibrium across the slope:</b>
+         <span class="hN">N</span> = <span class="hMG">mg</span>·cos α
+         (surface pushes back as hard as load presses).`,
+        `<b>Substitute numbers</b> and get the answer:`,
+      ],
+      sinQ: 'Why sin α, not cos α?',
+      sinA: `Decompose mg into a parallelogram of forces: one side along the slope, one perpendicular.
+             Along the slope — the <b>short</b> side = mg·sin α. At α = 0° (floor) —
+             sin = 0, no force needed. At α = 90° (wall) — sin = 1, you hold the full mg.`,
+      zeroQ: 'What happens at α = 0° and α = 90°?',
+      zeroA: `At α = 0° (horizontal floor): F = mg·sin 0° = 0 — the load rests on its own.<br>
+              At α = 90° (vertical wall): F = mg·sin 90° = mg — you hold the full weight.<br>
+              Intermediate angles — intermediate forces.`,
+      frictQ: 'What about friction?',
+      frictA: `We assume the slope is perfectly smooth. In reality friction may partially
+               hold the load, and the applied F will be smaller.
+               The formula F = mg·sin α is the minimum for the frictionless case.`,
+      tradeQ: 'Is the advantage of a shallow slope "free"?',
+      tradeA: `No. To raise a load to height h along a shallow slope you must push
+               <b>a greater distance</b> s = h/sin α. Work
+               A = F·s = mg·sin α · h/sin α = mg·h — the same. The golden rule of mechanics.`,
+      legend: [
+        ['#d97706', 'mg',       '— gravity (vertical, down)'],
+        ['#f59e0b', 'mg·sin α', '— sliding component'],
+        ['#fbbf24', 'mg·cos α', '— pressing component'],
+        ['#16a34a', 'N',        '— support reaction (perpendicular to slope)'],
+        ['#2563eb', 'F',        '— holding force (along slope, up)'],
+      ],
       answerLabel: 'Answer:',
     },
   }
@@ -1243,39 +1564,455 @@ document.getElementById('sMp').oninput = () => {
   drawP();
 };
 
+// ── Lever tab ─────────────────────────────────────────────────────────────────
+const cvL = document.getElementById('cL');
+const ctxL = cvL.getContext('2d');
+
+function arrowL(x1,y1,x2,y2,col,lw=2.5){
+  const a=Math.atan2(y2-y1,x2-x1),hl=10;
+  ctxL.save();ctxL.strokeStyle=col;ctxL.fillStyle=col;ctxL.lineWidth=lw;
+  ctxL.beginPath();ctxL.moveTo(x1,y1);ctxL.lineTo(x2,y2);ctxL.stroke();
+  ctxL.beginPath();ctxL.moveTo(x2,y2);
+  ctxL.lineTo(x2-hl*Math.cos(a-.38),y2-hl*Math.sin(a-.38));
+  ctxL.lineTo(x2-hl*Math.cos(a+.38),y2-hl*Math.sin(a+.38));
+  ctxL.closePath();ctxL.fill();ctxL.restore();
+}
+function dimLineL(x1,x2,y,col,label){
+  if(x2<=x1+4)return;
+  ctxL.save();ctxL.strokeStyle=col;ctxL.fillStyle=col;ctxL.lineWidth=1.5;ctxL.setLineDash([4,3]);
+  ctxL.beginPath();ctxL.moveTo(x1,y-4);ctxL.lineTo(x1,y+4);ctxL.stroke();
+  ctxL.beginPath();ctxL.moveTo(x2,y-4);ctxL.lineTo(x2,y+4);ctxL.stroke();
+  ctxL.setLineDash([]);
+  ctxL.beginPath();ctxL.moveTo(x1+2,y);ctxL.lineTo(x2-2,y);ctxL.stroke();
+  ctxL.font='bold 12px Segoe UI';ctxL.textAlign='center';
+  ctxL.fillText(label,(x1+x2)/2,y-7);ctxL.restore();
+}
+
+function drawLever(){
+  const W = cvL.width, H = cvL.height;
+  const m   = parseFloat(document.getElementById('sMl').value);
+  const L1f = parseFloat(document.getElementById('sL1').value);
+  const L2f = parseFloat(document.getElementById('sL2').value);
+  const mg  = m * G;
+  const F   = mg * L1f / L2f;
+  const s   = S();
+
+  ctxL.clearRect(0,0,W,H);
+
+  const PAD = 40, BL = W - 2*PAD, BH = 12;
+  // pivot placement: left side has L1, right side has L2, normalize so both fit
+  const total = L1f + L2f;
+  const pivX = PAD + (L1f/total) * BL;
+  const pivY = H*0.55;
+  const leftDist  = (L1f/total) * BL;
+  const rightDist = (L2f/total) * BL;
+
+  // pivot
+  const TH = 22;
+  ctxL.fillStyle = '#ef4444';
+  ctxL.beginPath(); ctxL.moveTo(pivX,pivY);
+  ctxL.lineTo(pivX-TH*0.6,pivY+TH); ctxL.lineTo(pivX+TH*0.6,pivY+TH);
+  ctxL.closePath(); ctxL.fill();
+  ctxL.strokeStyle='#fca5a5'; ctxL.lineWidth=1.5; ctxL.stroke();
+  ctxL.save(); ctxL.strokeStyle='#ccc'; ctxL.lineWidth=2; ctxL.setLineDash([5,4]);
+  ctxL.beginPath(); ctxL.moveTo(pivX-44,pivY+TH+1); ctxL.lineTo(pivX+44,pivY+TH+1); ctxL.stroke();
+  ctxL.setLineDash([]); ctxL.restore();
+
+  // lever bar
+  const grd = ctxL.createLinearGradient(0, pivY-BH/2, 0, pivY+BH/2);
+  grd.addColorStop(0,'#bfdbfe'); grd.addColorStop(1,'#93c5fd');
+  ctxL.fillStyle = grd;
+  ctxL.beginPath(); ctxL.roundRect(pivX-leftDist, pivY-BH/2, leftDist+rightDist, BH, 4); ctxL.fill();
+  ctxL.strokeStyle='#60a5fa'; ctxL.lineWidth=1.5; ctxL.stroke();
+
+  // Load hanging from left end (short arm)
+  const loadEndX = pivX - leftDist;
+  const ropeLen = 18;
+  const loadSize = 30 + Math.min(30, m*0.4);
+  const loadX = loadEndX - loadSize/2, loadY = pivY + BH/2 + ropeLen;
+  ctxL.strokeStyle='#334155'; ctxL.lineWidth=1.5;
+  ctxL.beginPath(); ctxL.moveTo(loadEndX, pivY+BH/2); ctxL.lineTo(loadEndX, loadY); ctxL.stroke();
+  const lgrd = ctxL.createLinearGradient(loadX, loadY, loadX, loadY+loadSize);
+  lgrd.addColorStop(0,'#fde68a'); lgrd.addColorStop(1,'#f59e0b');
+  ctxL.fillStyle = lgrd;
+  ctxL.fillRect(loadX, loadY, loadSize, loadSize);
+  ctxL.strokeStyle='#b45309'; ctxL.lineWidth=1.5; ctxL.strokeRect(loadX, loadY, loadSize, loadSize);
+  ctxL.font='bold 12px Segoe UI'; ctxL.fillStyle='#78350f'; ctxL.textAlign='center';
+  ctxL.fillText(`${m} ${s.unit_kg}`, loadEndX, loadY+loadSize/2+4);
+
+  // Force at right end (down)
+  const forceX = pivX + rightDist;
+  const sc = Math.min(80 / Math.max(F+1, mg), 1.0);
+  const FLen  = Math.max(28, F*sc);
+  const MGLen = Math.max(28, mg*sc);
+  // mg arrow from load down
+  arrowL(loadEndX+loadSize/2+14, loadY+loadSize/2, loadEndX+loadSize/2+14, loadY+loadSize/2+MGLen, '#d97706', 3);
+  ctxL.font='bold 13px Segoe UI'; ctxL.fillStyle='#d97706'; ctxL.textAlign='left';
+  ctxL.fillText(`mg = ${mg.toFixed(1)} ${s.unit_N}`, loadEndX+loadSize/2+20, loadY+loadSize/2+MGLen/2+5);
+
+  // F arrow at right end (down)
+  arrowL(forceX, pivY-BH/2, forceX, pivY-BH/2+FLen, '#2563eb', 3);
+  ctxL.fillStyle='#2563eb'; ctxL.textAlign='left';
+  ctxL.fillText(`F = ${F.toFixed(1)} ${s.unit_N}`, forceX+8, pivY-BH/2+FLen/2+5);
+
+  // N arrow at pivot
+  const NLen = Math.max(28, (F+mg)*sc);
+  arrowL(pivX, pivY+TH+2, pivX, pivY+TH+2-NLen, '#16a34a', 2.5);
+  ctxL.fillStyle='#16a34a'; ctxL.textAlign='center';
+  ctxL.fillText('N', pivX+18, pivY+TH+2-NLen/2);
+
+  // Dimension lines
+  dimLineL(loadEndX, pivX, pivY-30, '#7c3aed', `L₁ = ${L1f.toFixed(2)}·L`);
+  dimLineL(pivX, forceX, pivY-30, '#db2477', `L₂ = ${L2f.toFixed(2)}·L`);
+
+  // labels
+  ctxL.font='11px Segoe UI'; ctxL.fillStyle='#999'; ctxL.textAlign='center';
+  ctxL.fillText(curLang==='ru'?'ось':'axis', pivX, pivY+TH+20);
+}
+
+function drawLeverSolution(){
+  const m   = parseFloat(document.getElementById('sMl').value);
+  const L1f = parseFloat(document.getElementById('sL1').value);
+  const L2f = parseFloat(document.getElementById('sL2').value);
+  const mg  = m * G;
+  const F   = mg * L1f / L2f;
+  const adv = L2f / L1f;
+  const s   = S(), lv = s.lever;
+  const u = s.unit_N, uk = s.unit_kg, um = s.unit_ms2;
+
+  document.getElementById('solL').innerHTML = `
+    <div class="formulas" style="margin-bottom:10px;">
+      <div class="ftitle">${lv.titFormulas}</div>
+      <div class="frow"><span class="sym"><span class="hMG">mg</span></span><span class="expr">${lv.fGrav}</span><span class="numval hMG">m · g</span></div>
+      <div class="frow"><span class="sym">M</span><span class="expr">${lv.fMom}</span><span class="numval">F · L</span></div>
+      <div class="frow"><span class="sym">ΣM=0</span><span class="expr">${lv.fEquil}</span><span class="numval"><span class="hF">F</span>·<span class="hb">L₂</span> = <span class="hMG">mg</span>·<span class="ha">L₁</span></span></div>
+      <div class="frow"><span class="sym"><span class="hF">F</span></span><span class="expr">${lv.fForce}</span><span class="numval"><span class="hF">F</span> = <span class="hMG">mg</span>·<span class="ha">L₁</span>/<span class="hb">L₂</span></span></div>
+    </div>
+
+    <div class="formulas">
+      <div class="ftitle">${lv.titValues}</div>
+      <div class="frow"><span class="sym">m</span><span class="expr">${lv.vMass}</span><span class="numval">${m} ${uk}</span></div>
+      <div class="frow"><span class="sym">g</span><span class="expr">${lv.vG}</span><span class="numval">9.81 ${um}</span></div>
+      <div class="frow"><span class="sym"><span class="hMG">mg</span></span><span class="expr">${lv.vMG}</span><span class="numval hMG">${m} × 9.81 = ${mg.toFixed(2)} ${u}</span></div>
+      <div class="frow"><span class="sym"><span class="ha">L₁</span></span><span class="expr">${lv.vL1}</span><span class="numval ha">${L1f.toFixed(2)}·L</span></div>
+      <div class="frow"><span class="sym"><span class="hb">L₂</span></span><span class="expr">${lv.vL2}</span><span class="numval hb">${L2f.toFixed(2)}·L</span></div>
+      <div class="frow"><span class="sym"><span class="hF">F</span></span><span class="expr">${lv.vF}</span><span class="numval hF">${F.toFixed(2)} ${u}</span></div>
+      <div class="frow"><span class="sym">k</span><span class="expr">${lv.vAdv}</span><span class="numval">${adv.toFixed(2)} ×</span></div>
+    </div>
+
+    <div style="margin-top:14px;display:flex;flex-direction:column;gap:10px;">
+      <div class="sol-title">${lv.titAlgo}</div>
+      <div class="explain-block" style="border-left:3px solid #0ea5e9;background:#f0f9ff;">
+        <div class="explain-q" style="color:#0369a1;">${lv.algoGeneral}</div>
+        ${lv.algoSteps.map((text, i) =>
+          `<div class="algo-step"><span class="algo-num">${i+1}</span><span>${text}${i===6
+            ? ` <span class="hF">F</span> = ${mg.toFixed(2)} · ${L1f.toFixed(2)} / ${L2f.toFixed(2)} = <b>${F.toFixed(2)} ${u}</b>`
+            : ''}</span></div>`
+        ).join('')}
+      </div>
+
+      <div class="sol-title">${lv.titExplain}</div>
+      <div class="explain-block" style="border-left:3px solid #6366f1;">
+        <div class="explain-q">${lv.ruleQ}</div>${lv.ruleA}
+      </div>
+      <div class="explain-block" style="border-left:3px solid #ef4444;">
+        <div class="explain-q">${lv.pivotQ}</div>${lv.pivotA}
+      </div>
+      <div class="explain-block" style="border-left:3px solid #db2477;">
+        <div class="explain-q">${lv.tradeQ}</div>${lv.tradeA}
+      </div>
+
+      <div class="answer">
+        ${lv.answerLabel} <span class="hF">F</span> = <span class="hMG">mg</span>·<span class="ha">L₁</span>/<span class="hb">L₂</span>
+        = ${mg.toFixed(2)} × ${L1f.toFixed(2)} / ${L2f.toFixed(2)} = <b>${F.toFixed(2)} ${u}</b>
+      </div>
+    </div>
+  `;
+}
+
+function updateLeverStaticText(){
+  const s = S(), lv = s.lever;
+  document.getElementById('pageH1L').innerHTML = lv.h1;
+  document.getElementById('lMl').textContent   = lv.lM;
+  document.getElementById('lL1').textContent   = lv.lL1;
+  document.getElementById('lL2').textContent   = lv.lL2;
+  document.getElementById('hintL').textContent = lv.hint;
+  document.getElementById('tabBtnLever').textContent = s.tabLever;
+  const m   = parseFloat(document.getElementById('sMl').value);
+  const L1f = parseFloat(document.getElementById('sL1').value);
+  const L2f = parseFloat(document.getElementById('sL2').value);
+  document.getElementById('vMl').textContent = lv.valM(m);
+  document.getElementById('vL1').textContent = lv.valL(L1f);
+  document.getElementById('vL2').textContent = lv.valL(L2f);
+  document.getElementById('legendL').innerHTML = lv.legend.map(([col, sym, desc]) =>
+    `<div class="li"><div class="ld" style="background:${col}"></div>
+     <b style="color:${col}">${sym}</b>${desc}</div>`).join('');
+}
+
+function drawL(){ drawLever(); drawLeverSolution(); updateLeverStaticText(); }
+
+['sMl','sL1','sL2'].forEach(id => {
+  document.getElementById(id).oninput = () => drawL();
+});
+
+// ── Ramp tab ──────────────────────────────────────────────────────────────────
+const cvR = document.getElementById('cR');
+const ctxR = cvR.getContext('2d');
+
+function arrowR(x1,y1,x2,y2,col,lw=2.5){
+  const a=Math.atan2(y2-y1,x2-x1),hl=10;
+  ctxR.save();ctxR.strokeStyle=col;ctxR.fillStyle=col;ctxR.lineWidth=lw;
+  ctxR.beginPath();ctxR.moveTo(x1,y1);ctxR.lineTo(x2,y2);ctxR.stroke();
+  ctxR.beginPath();ctxR.moveTo(x2,y2);
+  ctxR.lineTo(x2-hl*Math.cos(a-.38),y2-hl*Math.sin(a-.38));
+  ctxR.lineTo(x2-hl*Math.cos(a+.38),y2-hl*Math.sin(a+.38));
+  ctxR.closePath();ctxR.fill();ctxR.restore();
+}
+
+function drawRamp(){
+  const W = cvR.width, H = cvR.height;
+  const m   = parseFloat(document.getElementById('sMr').value);
+  const deg = parseFloat(document.getElementById('sAng').value);
+  const rad = deg * Math.PI / 180;
+  const mg  = m * G;
+  const F   = mg * Math.sin(rad);
+  const N   = mg * Math.cos(rad);
+  const s   = S();
+
+  ctxR.clearRect(0,0,W,H);
+
+  // Ramp geometry: right-angle triangle with horizontal base and vertical right edge
+  const PAD = 40;
+  const baseY = H - 40;
+  const baseLen = W - 2*PAD;
+  // To keep triangle fitting: base full width, height = base * tan(α)
+  const rampH = Math.min(H*0.6, baseLen * Math.tan(rad));
+  const actualBase = rampH / Math.tan(rad);
+  const x0 = PAD, y0 = baseY;                       // bottom-left corner
+  const x1 = PAD + actualBase, y1 = baseY;          // bottom-right corner (foot of vertical)
+  const x2 = PAD + actualBase, y2 = baseY - rampH;  // top
+
+  // Slope goes from (x0,y0) up-right to (x2,y2)
+  // Fill triangle
+  const tgrd = ctxR.createLinearGradient(x0, y0, x2, y2);
+  tgrd.addColorStop(0, '#cbd5e1'); tgrd.addColorStop(1, '#94a3b8');
+  ctxR.fillStyle = tgrd;
+  ctxR.beginPath();
+  ctxR.moveTo(x0,y0); ctxR.lineTo(x1,y1); ctxR.lineTo(x2,y2); ctxR.closePath();
+  ctxR.fill();
+  ctxR.strokeStyle='#475569'; ctxR.lineWidth=2; ctxR.stroke();
+
+  // Hatching below base
+  ctxR.strokeStyle='#94a3b8'; ctxR.lineWidth=1;
+  for(let x=x0; x<W-10; x+=12){
+    ctxR.beginPath(); ctxR.moveTo(x,y0); ctxR.lineTo(x-8,y0+10); ctxR.stroke();
+  }
+
+  // Angle arc
+  ctxR.strokeStyle='#0369a1'; ctxR.lineWidth=1.5;
+  ctxR.beginPath(); ctxR.arc(x0, y0, 34, -rad, 0); ctxR.stroke();
+  ctxR.font='bold 13px Segoe UI'; ctxR.fillStyle='#0369a1'; ctxR.textAlign='left';
+  ctxR.fillText(`α = ${deg}°`, x0+40, y0-8);
+
+  // Place load on slope at ~60% up
+  const t = 0.55;
+  const slopeX = x0 + (x2-x0)*t;
+  const slopeY = y0 + (y2-y0)*t;
+  // Block orientation along slope
+  const nx = -Math.sin(rad), ny = -Math.cos(rad);  // outward normal (away from slope)
+  const tx =  Math.cos(rad), ty = -Math.sin(rad);  // tangent, up-slope
+  const blockSize = 34 + Math.min(20, m*0.3);
+  // Block center = slope point + half-size along normal
+  const cx = slopeX + nx * blockSize/2;
+  const cy = slopeY + ny * blockSize/2;
+
+  ctxR.save();
+  ctxR.translate(cx, cy);
+  ctxR.rotate(-rad);
+  const bgrd = ctxR.createLinearGradient(0, -blockSize/2, 0, blockSize/2);
+  bgrd.addColorStop(0,'#fde68a'); bgrd.addColorStop(1,'#f59e0b');
+  ctxR.fillStyle = bgrd;
+  ctxR.fillRect(-blockSize/2, -blockSize/2, blockSize, blockSize);
+  ctxR.strokeStyle='#b45309'; ctxR.lineWidth=1.5;
+  ctxR.strokeRect(-blockSize/2, -blockSize/2, blockSize, blockSize);
+  ctxR.font='bold 12px Segoe UI'; ctxR.fillStyle='#78350f'; ctxR.textAlign='center';
+  ctxR.fillText(`${m} ${s.unit_kg}`, 0, 4);
+  ctxR.restore();
+
+  // Force scaling
+  const sc = Math.min(70 / Math.max(mg, 1), 1.0);
+  const MGLen = Math.max(30, mg*sc);
+  const FLen  = Math.max(22, F*sc);
+  const NLen  = Math.max(22, N*sc);
+  const MGpar  = Math.max(18, mg*Math.sin(rad)*sc);
+  const MGperp = Math.max(18, mg*Math.cos(rad)*sc);
+
+  // mg arrow (from block center, straight down)
+  arrowR(cx, cy, cx, cy + MGLen, '#d97706', 3);
+  ctxR.font='bold 12px Segoe UI'; ctxR.fillStyle='#d97706'; ctxR.textAlign='left';
+  ctxR.fillText(`mg = ${mg.toFixed(1)}`, cx+6, cy + MGLen + 4);
+
+  // mg·sin α component (along slope, down-slope direction)
+  const dsx = -tx, dsy = -ty;  // down-slope
+  arrowR(cx, cy, cx + dsx*MGpar, cy + dsy*MGpar, '#f59e0b', 2.3);
+  ctxR.fillStyle='#f59e0b'; ctxR.textAlign='left';
+  ctxR.fillText(`mg·sin α = ${(mg*Math.sin(rad)).toFixed(1)}`, cx + dsx*MGpar + 6, cy + dsy*MGpar);
+
+  // mg·cos α component (into slope = -normal)
+  arrowR(cx, cy, cx - nx*MGperp, cy - ny*MGperp, '#fbbf24', 2.3);
+  ctxR.fillStyle='#b45309'; ctxR.textAlign='left';
+  ctxR.fillText(`mg·cos α = ${(mg*Math.cos(rad)).toFixed(1)}`, cx - nx*MGperp + 6, cy - ny*MGperp + 12);
+
+  // N arrow (along normal outward, starting at contact point)
+  arrowR(slopeX, slopeY, slopeX + nx*NLen, slopeY + ny*NLen, '#16a34a', 2.5);
+  ctxR.fillStyle='#16a34a'; ctxR.textAlign='left';
+  ctxR.fillText(`N = ${N.toFixed(1)}`, slopeX + nx*NLen + 4, slopeY + ny*NLen);
+
+  // F arrow (along slope up, from block)
+  const fx = cx + tx*blockSize*0.3, fy = cy + ty*blockSize*0.3;
+  arrowR(fx, fy, fx + tx*FLen, fy + ty*FLen, '#2563eb', 3);
+  ctxR.fillStyle='#2563eb'; ctxR.textAlign='left';
+  ctxR.fillText(`F = ${F.toFixed(1)} ${s.unit_N}`, fx + tx*FLen + 4, fy + ty*FLen - 4);
+}
+
+function drawRampSolution(){
+  const m   = parseFloat(document.getElementById('sMr').value);
+  const deg = parseFloat(document.getElementById('sAng').value);
+  const rad = deg * Math.PI / 180;
+  const mg  = m * G;
+  const sinA = Math.sin(rad), cosA = Math.cos(rad);
+  const F   = mg * sinA;
+  const N   = mg * cosA;
+  const s   = S(), rp = s.ramp;
+  const u = s.unit_N, uk = s.unit_kg, um = s.unit_ms2;
+
+  document.getElementById('solR').innerHTML = `
+    <div class="formulas" style="margin-bottom:10px;">
+      <div class="ftitle">${rp.titFormulas}</div>
+      <div class="frow"><span class="sym"><span class="hMG">mg</span></span><span class="expr">${rp.fGrav}</span><span class="numval hMG">m · g</span></div>
+      <div class="frow"><span class="sym">↘↓</span><span class="expr">${rp.fSplit}</span><span class="numval">mg·sin α &nbsp;/&nbsp; mg·cos α</span></div>
+      <div class="frow"><span class="sym"><span class="hF">F</span></span><span class="expr">${rp.fEquilTan}</span><span class="numval"><span class="hF">F</span> = <span class="hMG">mg</span>·sin α</span></div>
+      <div class="frow"><span class="sym"><span class="hN">N</span></span><span class="expr">${rp.fEquilNorm}</span><span class="numval"><span class="hN">N</span> = <span class="hMG">mg</span>·cos α</span></div>
+    </div>
+
+    <div class="formulas">
+      <div class="ftitle">${rp.titValues}</div>
+      <div class="frow"><span class="sym">m</span><span class="expr">${rp.vMass}</span><span class="numval">${m} ${uk}</span></div>
+      <div class="frow"><span class="sym">g</span><span class="expr">${rp.vG}</span><span class="numval">9.81 ${um}</span></div>
+      <div class="frow"><span class="sym"><span class="hMG">mg</span></span><span class="expr">${rp.vMG}</span><span class="numval hMG">${m} × 9.81 = ${mg.toFixed(2)} ${u}</span></div>
+      <div class="frow"><span class="sym">α</span><span class="expr">${rp.vAng}</span><span class="numval">${deg}° (sin α = ${sinA.toFixed(3)}, cos α = ${cosA.toFixed(3)})</span></div>
+      <div class="frow"><span class="sym">↘</span><span class="expr">${rp.vFpar}</span><span class="numval">${mg.toFixed(2)} · ${sinA.toFixed(3)} = ${(mg*sinA).toFixed(2)} ${u}</span></div>
+      <div class="frow"><span class="sym">↓</span><span class="expr">${rp.vFnorm}</span><span class="numval">${mg.toFixed(2)} · ${cosA.toFixed(3)} = ${(mg*cosA).toFixed(2)} ${u}</span></div>
+      <div class="frow"><span class="sym"><span class="hF">F</span></span><span class="expr">${rp.vF}</span><span class="numval hF">${F.toFixed(2)} ${u}</span></div>
+      <div class="frow"><span class="sym"><span class="hN">N</span></span><span class="expr">${rp.vN}</span><span class="numval hN">${N.toFixed(2)} ${u}</span></div>
+    </div>
+
+    <div style="margin-top:14px;display:flex;flex-direction:column;gap:10px;">
+      <div class="sol-title">${rp.titAlgo}</div>
+      <div class="explain-block" style="border-left:3px solid #0ea5e9;background:#f0f9ff;">
+        <div class="explain-q" style="color:#0369a1;">${rp.algoGeneral}</div>
+        ${rp.algoSteps.map((text, i) =>
+          `<div class="algo-step"><span class="algo-num">${i+1}</span><span>${text}${i===6
+            ? ` <span class="hF">F</span> = ${mg.toFixed(2)} · sin ${deg}° = <b>${F.toFixed(2)} ${u}</b>`
+            : ''}</span></div>`
+        ).join('')}
+      </div>
+
+      <div class="sol-title">${rp.titExplain}</div>
+      <div class="explain-block" style="border-left:3px solid #6366f1;">
+        <div class="explain-q">${rp.sinQ}</div>${rp.sinA}
+      </div>
+      <div class="explain-block" style="border-left:3px solid #d97706;">
+        <div class="explain-q">${rp.zeroQ}</div>${rp.zeroA}
+      </div>
+      <div class="explain-block" style="border-left:3px solid #16a34a;">
+        <div class="explain-q">${rp.frictQ}</div>${rp.frictA}
+      </div>
+      <div class="explain-block" style="border-left:3px solid #db2477;">
+        <div class="explain-q">${rp.tradeQ}</div>${rp.tradeA}
+      </div>
+
+      <div class="answer">
+        ${rp.answerLabel} <span class="hF">F</span> = <span class="hMG">mg</span>·sin α
+        = ${mg.toFixed(2)} · ${sinA.toFixed(3)} = <b>${F.toFixed(2)} ${u}</b>
+      </div>
+    </div>
+  `;
+}
+
+function updateRampStaticText(){
+  const s = S(), rp = s.ramp;
+  document.getElementById('pageH1R').innerHTML = rp.h1;
+  document.getElementById('lMr').textContent   = rp.lM;
+  document.getElementById('lAng').textContent  = rp.lAng;
+  document.getElementById('hintR').textContent = rp.hint;
+  document.getElementById('tabBtnRamp').textContent = s.tabRamp;
+  const m = parseFloat(document.getElementById('sMr').value);
+  const a = parseFloat(document.getElementById('sAng').value);
+  document.getElementById('vMr').textContent = rp.valM(m);
+  document.getElementById('vAng').textContent = rp.valAng(a);
+  document.getElementById('legendR').innerHTML = rp.legend.map(([col, sym, desc]) =>
+    `<div class="li"><div class="ld" style="background:${col}"></div>
+     <b style="color:${col}">${sym}</b>${desc}</div>`).join('');
+}
+
+function drawR(){ drawRamp(); drawRampSolution(); updateRampStaticText(); }
+
+['sMr','sAng'].forEach(id => {
+  document.getElementById(id).oninput = () => drawR();
+});
+
 function switchTab(name){
-  document.getElementById('tab-beam').classList.toggle('active', name === 'beam');
-  document.getElementById('tab-pulley').classList.toggle('active', name === 'pulley');
+  ['beam','pulley','lever','ramp'].forEach(n => {
+    document.getElementById('tab-'+n).classList.toggle('active', name === n);
+  });
   document.getElementById('tabBtnBeam').classList.toggle('active', name === 'beam');
   document.getElementById('tabBtnPulley').classList.toggle('active', name === 'pulley');
+  document.getElementById('tabBtnLever').classList.toggle('active', name === 'lever');
+  document.getElementById('tabBtnRamp').classList.toggle('active', name === 'ramp');
   if (name === 'pulley') { resizeP(); drawP(); }
+  else if (name === 'lever') { resizeL(); drawL(); }
+  else if (name === 'ramp')  { resizeR(); drawR(); }
   else { resize(); }
 }
 
-// Re-run pulley static text on language toggle
+// Re-run static text on language toggle
 const _origToggleLang = toggleLang;
 toggleLang = function(){
   _origToggleLang();
-  updatePulleyStaticText();
-  drawP();
+  updatePulleyStaticText(); drawP();
+  updateLeverStaticText();  drawL();
+  updateRampStaticText();   drawR();
 };
 
 function resize(){
   const W=Math.min(680,window.innerWidth-32);
-  cv.width=W;cv.height=Math.round(W*0.58);draw();
+  cv.width=W; cv.height=Math.round(W*0.58); draw();
 }
 function resizeP(){
   const W=Math.min(680,window.innerWidth-32);
-  cvP.width=W;cvP.height=Math.round(W*0.62);
+  cvP.width=W; cvP.height=Math.round(W*0.62);
 }
-window.addEventListener('resize',()=>{resize();resizeP();drawP();});
+function resizeL(){
+  const W=Math.min(680,window.innerWidth-32);
+  cvL.width=W; cvL.height=Math.round(W*0.50);
+}
+function resizeR(){
+  const W=Math.min(680,window.innerWidth-32);
+  cvR.width=W; cvR.height=Math.round(W*0.62);
+}
+window.addEventListener('resize',()=>{
+  resize(); resizeP(); resizeL(); resizeR();
+  drawP(); drawL(); drawR();
+});
 updateStaticText();
 updatePulleyStaticText();
-resize();
-resizeP();
+updateLeverStaticText();
+updateRampStaticText();
+resize();  resizeP();  resizeL();  resizeR();
 syncFmax();
 setEquilibrium();
-drawP();
+drawP(); drawL(); drawR();
 </script>
 </body>
 </html>
